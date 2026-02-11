@@ -329,26 +329,16 @@ export default function DailyPage() {
                     <p className="text-5xl font-black text-white sm:text-7xl">
                       {lastAnswer.percentageA}%
                     </p>
-                    <p className="mt-2 text-lg text-zinc-300">Левая сторона</p>
                   </div>
-                  <div className="text-4xl font-black text-zinc-500 sm:text-6xl">
+                  <div className="text-4xl font-black text-white sm:text-6xl">
                     VS
                   </div>
                   <div className="text-center">
                     <p className="text-5xl font-black text-white sm:text-7xl">
                       {lastAnswer.percentageB}%
                     </p>
-                    <p className="mt-2 text-lg text-zinc-300">Правая сторона</p>
                   </div>
                 </div>
-                <p className="mt-8 text-xl text-white">
-                  {lastAnswer.isCorrect 
-                    ? "✓ Вы выбрали правильно!" 
-                    : "✗ Вы выбрали неправильно"}
-                </p>
-                <p className="mt-4 text-lg text-zinc-400">
-                  Следующий раунд через 5 секунд...
-                </p>
               </motion.div>
             </div>
           </motion.div>
