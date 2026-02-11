@@ -1,0 +1,52 @@
+# Dependencies
+node_modules
+bun.lockb
+
+# Next.js build output
+.next
+out
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Database (will be mounted as volume)
+db/*.sqlite
+db/*.sqlite-journal
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage
+.nyc_output
+
+# Misc
+README.md
+CHANGELOG.md
+LICENSE
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+.git
+.gitignore
+
+# Bot directory (separate service)
+bot/
+scripts/
+backups/

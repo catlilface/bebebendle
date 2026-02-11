@@ -1,0 +1,75 @@
+services:
+  # Frontend Next.js application
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: bebebendle-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - CRON_SECRET=${CRON_SECRET:-default_secret}
+    volumes:
+      # Shared database volume
+      - ./db:/app/db
+      # Persist Next.js cache
+      - next-cache:/app/.next/cache
+    networks:
+      - bebebendle-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/admin/check-auth"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Python Telegram Bot
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    container_name: bebebendle-bot
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Shared database volume (read-write for bot)
+      - ./db:/app/db
+    networks:
+      - bebebendle-network
+    restart: unless-stopped
+    depends_on:
+      frontend:
+        condition: service_healthy
+
+  # Optional: Database backup service
+  db-backup:
+    image: alpine:latest
+    container_name: bebebendle-db-backup
+    volumes:
+      - ./db:/data/db:ro
+      - ./backups:/backups
+    command: >
+      sh -c "
+        while true; do
+          sleep 86400 &&
+          cp /data/db/bebendle.sqlite /backups/bebendle-$$(date +%Y%m%d-%H%M%S).sqlite &&
+          find /backups -name '*.sqlite' -mtime +7 -delete
+        done
+      "
+    networks:
+      - bebebendle-network
+    restart: unless-stopped
+    profiles:
+      - backup
+
+volumes:
+  next-cache:
+  db-data:
+
+networks:
+  bebebendle-network:
+    driver: bridge
