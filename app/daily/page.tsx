@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { hasPlayedToday, saveDailyResult, getTodayResult } from "../lib/cookies";
 
 type Scran = {
   id: number;
@@ -50,8 +51,26 @@ export default function DailyPage() {
   const [userScore, setUserScore] = useState(0);
   const [averageScore, setAverageScore] = useState<number | null>(null);
   const [submittingScore, setSubmittingScore] = useState(false);
+  const [alreadyPlayed, setAlreadyPlayed] = useState(false);
+  const [storedResult, setStoredResult] = useState<ReturnType<typeof getTodayResult>>(null);
+
+  // Check if already played today
+  useEffect(() => {
+    const played = hasPlayedToday();
+    if (played) {
+      const result = getTodayResult();
+      setAlreadyPlayed(true);
+      setStoredResult(result);
+      setLoading(false);
+    }
+  }, []);
 
   const fetchDaily = useCallback(async () => {
+    // Skip if already played
+    if (hasPlayedToday()) {
+      return;
+    }
+
     try {
       setLoading(true);
       const today = new Date().toISOString().split("T")[0];
@@ -74,8 +93,10 @@ export default function DailyPage() {
   }, []);
 
   useEffect(() => {
-    fetchDaily();
-  }, [fetchDaily]);
+    if (!alreadyPlayed) {
+      fetchDaily();
+    }
+  }, [fetchDaily, alreadyPlayed]);
 
   const handleVote = async (chosenScranId: number) => {
     if (!dailyData || isVoting) return;
@@ -113,11 +134,9 @@ export default function DailyPage() {
         setLastAnswer(answer);
         setShowResult(true);
 
-        // Wait 5 seconds then transition
         setTimeout(() => {
           setIsTransitioning(true);
           
-          // Fade out for 2 seconds
           setTimeout(() => {
             setShowResult(false);
             setLastAnswer(null);
@@ -126,7 +145,6 @@ export default function DailyPage() {
               setCurrentRound((prev) => prev + 1);
               setIsTransitioning(false);
             } else {
-              // Game complete
               const correctCount = [...userAnswers, answer].filter(
                 (a) => a.isCorrect
               ).length;
@@ -167,6 +185,21 @@ export default function DailyPage() {
         const avgData = await avgResponse.json();
         setAverageScore(avgData.averageScore);
       }
+
+      // Save to cookie
+      saveDailyResult({
+        date: dailyData.date,
+        score,
+        totalRounds: 10,
+        userAnswers: [...userAnswers, {
+          roundNumber: currentRound,
+          isCorrect: score > userScore, // This will be the last answer
+          chosenScranId: userAnswers[userAnswers.length - 1]?.chosenScranId || 0,
+          correctScranId: userAnswers[userAnswers.length - 1]?.correctScranId || 0,
+          percentageA: userAnswers[userAnswers.length - 1]?.percentageA || 0,
+          percentageB: userAnswers[userAnswers.length - 1]?.percentageB || 0,
+        }],
+      });
     } catch (error) {
       console.error("Error submitting score:", error);
     } finally {
@@ -174,69 +207,54 @@ export default function DailyPage() {
     }
   };
 
+  // Save results to cookie when game completes
+  useEffect(() => {
+    if (gameComplete && dailyData) {
+      saveDailyResult({
+        date: dailyData.date,
+        score: userScore,
+        totalRounds: 10,
+        userAnswers,
+      });
+    }
+  }, [gameComplete, dailyData, userScore, userAnswers]);
+
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-950">
-        <div className="text-2xl font-bold text-zinc-50">Загрузка...</div>
+      <div className="retro-bg flex min-h-screen items-center justify-center">
+        <div className="retro-overlay absolute inset-0" />
+        <div className="pixel-text relative z-10 text-2xl font-bold text-white">Загрузка...</div>
       </div>
     );
   }
 
-  if (error) {
+  // Show already played screen
+  if (alreadyPlayed && storedResult) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-950">
-        <div className="text-center">
-          <p className="mb-4 text-xl text-zinc-400">{error}</p>
-          <Link
-            href="/"
-            className="rounded-full bg-white px-6 py-3 font-bold text-zinc-900 transition-colors hover:bg-zinc-200"
-          >
-            ← На главную
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (!dailyData) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-950">
-        <div className="text-center">
-          <p className="mb-4 text-xl text-zinc-400">Нет доступных блюд</p>
-          <Link
-            href="/"
-            className="rounded-full bg-white px-6 py-3 font-bold text-zinc-900 transition-colors hover:bg-zinc-200"
-          >
-            ← На главную
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  // Results screen
-  if (gameComplete) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 px-4">
+      <div className="retro-bg flex min-h-screen flex-col items-center justify-center px-4">
+        <div className="retro-overlay absolute inset-0" />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center"
+          className="relative z-10 w-full max-w-4xl text-center"
         >
-          <h1 className="mb-8 text-4xl font-bold text-white sm:text-5xl">
-            Результаты
+          <h1 className="pixel-text mb-4 text-4xl font-bold text-white sm:text-5xl">
+            Вы уже играли сегодня!
           </h1>
+          
+          <p className="pixel-text mb-8 text-xl text-white">
+            Следующий дейлик будет доступен завтра
+          </p>
 
-          {/* Circles showing answers */}
           <div className="mb-8 flex flex-wrap justify-center gap-3">
-            {userAnswers.map((answer, index) => (
+            {storedResult.userAnswers.map((answer, index) => (
               <motion.div
                 key={index}
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ delay: index * 0.1, duration: 0.3 }}
-                className={`flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold sm:h-14 sm:w-14 ${
+                transition={{ delay: index * 0.05, duration: 0.3 }}
+                className={`pixel-btn flex h-12 w-12 items-center justify-center text-lg font-bold sm:h-14 sm:w-14 ${
                   answer.isCorrect
                     ? "bg-green-500 text-white"
                     : "bg-red-500 text-white"
@@ -247,36 +265,121 @@ export default function DailyPage() {
             ))}
           </div>
 
-          {/* Scores */}
           <div className="mb-8 space-y-4">
-            <div className="rounded-2xl bg-zinc-900 p-6">
-              <p className="mb-2 text-lg text-zinc-400">Ваш результат</p>
-              <p className="text-5xl font-black text-white sm:text-6xl">
+            <div className="pixel-container rounded-2xl bg-zinc-900/80 p-6">
+              <p className="pixel-text mb-2 text-lg text-white">Ваш результат</p>
+              <p className="pixel-text text-5xl font-black text-white sm:text-6xl">
+                {storedResult.score}/10
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/"
+            className="pixel-btn inline-block bg-yellow-400 border-4 border-black px-8 py-4 text-black text-lg hover:bg-yellow-300"
+          >
+            На главную
+          </Link>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="retro-bg flex min-h-screen items-center justify-center">
+        <div className="retro-overlay absolute inset-0" />
+        <div className="relative z-10 text-center">
+          <p className="pixel-text mb-6 text-xl text-white">{error}</p>
+          <Link
+            href="/"
+            className="pixel-btn inline-block bg-yellow-400 border-4 border-black px-6 py-3 text-black text-lg hover:bg-yellow-300"
+          >
+            На главную
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dailyData) {
+    return (
+      <div className="retro-bg flex min-h-screen items-center justify-center">
+        <div className="retro-overlay absolute inset-0" />
+        <div className="relative z-10 text-center">
+          <p className="pixel-text mb-6 text-xl text-white">Нет доступных блюд</p>
+          <Link
+            href="/"
+            className="pixel-btn inline-block bg-yellow-400 border-4 border-black px-6 py-3 text-black text-lg hover:bg-yellow-300"
+          >
+            На главную
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (gameComplete) {
+    return (
+      <div className="retro-bg flex min-h-screen flex-col items-center justify-center px-4">
+        <div className="retro-overlay absolute inset-0" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="relative z-10 w-full max-w-4xl text-center"
+        >
+          <h1 className="pixel-text mb-8 text-4xl font-bold text-white sm:text-5xl">
+            Результаты
+          </h1>
+
+          <div className="mb-8 flex flex-wrap justify-center gap-3">
+            {userAnswers.map((answer, index) => (
+              <motion.div
+                key={index}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: index * 0.1, duration: 0.3 }}
+                className={`pixel-btn flex h-12 w-12 items-center justify-center text-lg font-bold sm:h-14 sm:w-14 ${
+                  answer.isCorrect
+                    ? "bg-green-500 text-white"
+                    : "bg-red-500 text-white"
+                }`}
+              >
+                {answer.isCorrect ? "✓" : "✗"}
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="mb-8 space-y-4">
+            <div className="pixel-container rounded-2xl bg-zinc-900/80 p-6">
+              <p className="pixel-text mb-2 text-lg text-white">Ваш результат</p>
+              <p className="pixel-text text-5xl font-black text-white sm:text-6xl">
                 {userScore}/10
               </p>
             </div>
 
             {averageScore !== null && (
-              <div className="rounded-2xl bg-zinc-900 p-6">
-                <p className="mb-2 text-lg text-zinc-400">
+              <div className="pixel-container rounded-2xl bg-zinc-900/80 p-6">
+                <p className="pixel-text mb-2 text-lg text-white">
                   Средний результат всех игроков
                 </p>
-                <p className="text-5xl font-black text-zinc-300 sm:text-6xl">
+                <p className="pixel-text text-5xl font-black text-zinc-300 sm:text-6xl">
                   {averageScore}/10
                 </p>
               </div>
             )}
 
             {submittingScore && (
-              <p className="text-zinc-500">Сохранение результатов...</p>
+              <p className="pixel-text text-white">Сохранение результатов...</p>
             )}
           </div>
 
           <Link
             href="/"
-            className="inline-block rounded-full bg-white px-8 py-4 font-bold text-zinc-900 transition-colors hover:bg-zinc-200"
+            className="pixel-btn inline-block bg-yellow-400 border-4 border-black px-8 py-4 text-black text-lg hover:bg-yellow-300"
           >
-            ← На главную
+            На главную
           </Link>
         </motion.div>
       </div>
@@ -289,8 +392,9 @@ export default function DailyPage() {
 
   if (!currentRoundData) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-950">
-        <div className="text-xl text-zinc-400">Раунд не найден</div>
+      <div className="retro-bg flex min-h-screen items-center justify-center">
+        <div className="retro-overlay absolute inset-0" />
+        <div className="pixel-text relative z-10 text-xl text-white">Раунд не найден</div>
       </div>
     );
   }
@@ -298,7 +402,9 @@ export default function DailyPage() {
   const { scranA, scranB } = currentRoundData;
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-zinc-950">
+    <div className="retro-bg relative h-screen w-full overflow-hidden">
+      <div className="retro-overlay absolute inset-0" />
+      
       {/* Result Overlay */}
       <AnimatePresence>
         {showResult && lastAnswer && (
@@ -326,15 +432,15 @@ export default function DailyPage() {
               >
                 <div className="flex items-center justify-center gap-8 sm:gap-16">
                   <div className="text-center">
-                    <p className="text-5xl font-black text-white sm:text-7xl">
+                    <p className="pixel-text text-5xl font-black text-white sm:text-7xl">
                       {lastAnswer.percentageA}%
                     </p>
                   </div>
-                  <div className="text-4xl font-black text-white sm:text-6xl">
+                  <div className="pixel-text text-4xl font-black text-white sm:text-6xl">
                     VS
                   </div>
                   <div className="text-center">
-                    <p className="text-5xl font-black text-white sm:text-7xl">
+                    <p className="pixel-text text-5xl font-black text-white sm:text-7xl">
                       {lastAnswer.percentageB}%
                     </p>
                   </div>
@@ -361,45 +467,42 @@ export default function DailyPage() {
       {/* Back link */}
       <Link
         href="/"
-        className="absolute left-4 top-4 z-20 text-xl font-bold text-white transition-colors hover:text-zinc-300"
+        className="pixel-text absolute left-4 top-4 z-20 text-xl font-bold text-white transition-colors hover:text-yellow-300"
       >
-        ← бебендл
+        бебендл
       </Link>
 
       {/* Round indicator */}
-      <div className="absolute right-4 top-4 z-20 text-xl font-bold text-white">
-        Раунд {currentRound}/10
+      <div className="pixel-text absolute right-4 top-4 z-20 text-xl font-bold text-white">
+        раунд {currentRound}/10
       </div>
 
-      {/* Two columns */}
-      <div className="flex h-full w-full">
+      {/* Two columns - stacked on mobile, side by side on desktop */}
+      <div className="relative z-10 flex h-full w-full flex-col md:flex-row">
         {/* Scran A */}
         <button
           onClick={() => handleVote(scranA.id)}
           disabled={isVoting}
-          className="group relative h-full w-1/2 overflow-hidden border-r border-zinc-800 disabled:cursor-default"
+          className="group relative h-1/2 w-full overflow-hidden border-b-4 border-black disabled:cursor-default md:h-full md:w-1/2 md:border-b-0 md:border-r-4"
         >
-          {/* Image */}
           <img
             src={scranA.imageUrl}
             alt={scranA.name}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
 
-          {/* Overlay gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
 
-          {/* Info at bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-            <h2 className="mb-1 text-lg font-bold text-white sm:text-xl">
+            <h2 className="pixel-text mb-1 text-lg font-bold text-white sm:text-xl">
               {scranA.name}
             </h2>
             {scranA.description && (
-              <p className="mb-2 line-clamp-2 text-xs text-zinc-300 sm:text-sm">
+              <p className="pixel-text mb-2 line-clamp-2 text-xs text-zinc-300 sm:text-sm">
                 {scranA.description}
               </p>
             )}
-            <p className="text-sm font-semibold text-white sm:text-base">
+            <p className="pixel-text text-sm font-semibold text-white sm:text-base">
               {scranA.price.toFixed(2)} ₽
             </p>
           </div>
@@ -409,29 +512,26 @@ export default function DailyPage() {
         <button
           onClick={() => handleVote(scranB.id)}
           disabled={isVoting}
-          className="group relative h-full w-1/2 overflow-hidden disabled:cursor-default"
+          className="group relative h-1/2 w-full overflow-hidden disabled:cursor-default md:h-full md:w-1/2"
         >
-          {/* Image */}
           <img
             src={scranB.imageUrl}
             alt={scranB.name}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
 
-          {/* Overlay gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
 
-          {/* Info at bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-            <h2 className="mb-1 text-lg font-bold text-white sm:text-xl">
+            <h2 className="pixel-text mb-1 text-lg font-bold text-white sm:text-xl">
               {scranB.name}
             </h2>
             {scranB.description && (
-              <p className="mb-2 line-clamp-2 text-xs text-zinc-300 sm:text-sm">
+              <p className="pixel-text mb-2 line-clamp-2 text-xs text-zinc-300 sm:text-sm">
                 {scranB.description}
               </p>
             )}
-            <p className="text-sm font-semibold text-white sm:text-base">
+            <p className="pixel-text text-sm font-semibold text-white sm:text-base">
               {scranB.price.toFixed(2)} ₽
             </p>
           </div>
@@ -441,7 +541,7 @@ export default function DailyPage() {
       {/* VS Badge */}
       {!showResult && (
         <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-xl font-black text-zinc-900 shadow-2xl sm:h-20 sm:w-20 sm:text-2xl">
+          <div className="pixel-btn flex h-12 w-12 items-center justify-center bg-white text-lg font-black text-black md:h-16 md:w-16 md:text-xl lg:h-20 lg:w-20 lg:text-2xl">
             VS
           </div>
         </div>

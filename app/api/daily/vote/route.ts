@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db, scrans } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 function getLikesPercentage(scran: { numberOfLikes: number; numberOfDislikes: number }): number {
   const total = scran.numberOfLikes + scran.numberOfDislikes;
@@ -30,12 +30,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Scrans not found" }, { status: 404 });
     }
 
-    const scranA = scranAData[0];
-    const scranB = scranBData[0];
+    // Determine the unchosen scran
+    const unchosenScranId = chosenScranId === scranAId ? scranBId : scranAId;
+
+    // Add like to chosen scran and dislike to unchosen scran
+    await Promise.all([
+      db
+        .update(scrans)
+        .set({ numberOfLikes: sql`${scrans.numberOfLikes} + 1` })
+        .where(eq(scrans.id, chosenScranId)),
+      db
+        .update(scrans)
+        .set({ numberOfDislikes: sql`${scrans.numberOfDislikes} + 1` })
+        .where(eq(scrans.id, unchosenScranId)),
+    ]);
+
+    // Get updated data for percentage calculation
+    const [updatedScranAData, updatedScranBData] = await Promise.all([
+      db.select().from(scrans).where(eq(scrans.id, scranAId)).limit(1),
+      db.select().from(scrans).where(eq(scrans.id, scranBId)).limit(1),
+    ]);
+
+    const updatedScranA = updatedScranAData[0];
+    const updatedScranB = updatedScranBData[0];
 
     // Calculate percentages
-    const percentageA = getLikesPercentage(scranA);
-    const percentageB = getLikesPercentage(scranB);
+    const percentageA = getLikesPercentage(updatedScranA);
+    const percentageB = getLikesPercentage(updatedScranB);
 
     // Determine which one has higher percentage
     const correctScranId = percentageA > percentageB ? scranAId : scranBId;

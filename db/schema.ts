@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 const client = createClient({
   url: "file:./db/bebendle.sqlite",
@@ -21,12 +21,14 @@ export const scrans = sqliteTable("scrans", {
 
 export const dailyScrandles = sqliteTable("daily_scrandles", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  date: text("date").notNull().unique(), // YYYY-MM-DD format
+  date: text("date").notNull(),
   scranAId: integer("scran_a_id").notNull(),
   scranBId: integer("scran_b_id").notNull(),
-  roundNumber: integer("round_number").notNull(), // 1-10
+  roundNumber: integer("round_number").notNull(),
   createdAt: text("created_at").notNull(),
-});
+}, (table) => ({
+  uniqueRoundPerDay: uniqueIndex("unique_round_per_day").on(table.date, table.roundNumber),
+}));
 
 export const scrandleVotes = sqliteTable("scrandle_votes", {
   id: integer("id").primaryKey({ autoIncrement: true }),

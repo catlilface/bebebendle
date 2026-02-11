@@ -40,27 +40,25 @@ export function CountdownTimer() {
     };
   }, []);
 
+  const textShadowStyle = {
+    fontFamily: "var(--font-pixel), monospace",
+    color: "white",
+    textShadow: "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, -2px 0 0 #000, 2px 0 0 #000, 0 -2px 0 #000, 0 2px 0 #000",
+  };
+
   // Prevent hydration mismatch by not rendering until mounted
   if (!mounted) {
     return (
-      <div className="mb-6 text-center">
+      <div className="mb-4 sm:mb-6 2xl:mb-8 text-center">
         <p 
-          className="text-base sm:text-lg font-medium mb-1"
-          style={{
-            fontFamily: "var(--font-pixel), monospace",
-            color: "white",
-            textShadow: "2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000",
-          }}
+          className="text-sm sm:text-base md:text-lg 2xl:text-xl 4xl:text-2xl font-medium mb-1 2xl:mb-2"
+          style={textShadowStyle}
         >
           До следующего дейлика
         </p>
         <p 
-          className="text-2xl sm:text-3xl font-black"
-          style={{
-            fontFamily: "var(--font-pixel), monospace",
-            color: "white",
-            textShadow: "3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000",
-          }}
+          className="text-xl sm:text-2xl md:text-3xl 2xl:text-4xl 4xl:text-5xl font-black"
+          style={textShadowStyle}
         >
           00:00:00
         </p>
@@ -69,24 +67,16 @@ export function CountdownTimer() {
   }
 
   return (
-    <div className="mb-6 text-center">
+    <div className="mb-4 sm:mb-6 2xl:mb-8 text-center">
       <p 
-        className="text-base sm:text-lg font-medium mb-1"
-        style={{
-          fontFamily: "var(--font-pixel), monospace",
-          color: "white",
-          textShadow: "2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000",
-        }}
+        className="text-sm sm:text-base md:text-lg 2xl:text-xl 4xl:text-2xl font-medium mb-1 2xl:mb-2"
+        style={textShadowStyle}
       >
         До следующего дейлика
       </p>
       <p 
-        className="text-2xl sm:text-3xl font-black"
-        style={{
-          fontFamily: "var(--font-pixel), monospace",
-          color: "white",
-          textShadow: "3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000",
-        }}
+        className="text-xl sm:text-2xl md:text-3xl 2xl:text-4xl 4xl:text-5xl font-black"
+        style={textShadowStyle}
       >
         {timeLeft}
       </p>

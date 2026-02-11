@@ -45,7 +45,6 @@ export default function ScrandlePage() {
         setScrandleData(data);
         setError("");
       } else if (response.status === 404) {
-        // No more rounds, go to results
         window.location.href = "/scrandle/results";
       } else {
         setError("Failed to load scrandle");
@@ -93,8 +92,9 @@ export default function ScrandlePage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
-        <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+      <div className="retro-bg flex min-h-screen items-center justify-center">
+        <div className="retro-overlay absolute inset-0" />
+        <div className="pixel-text relative z-10 text-2xl font-bold text-white">
           Загрузка...
         </div>
       </div>
@@ -103,12 +103,13 @@ export default function ScrandlePage() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
-        <div className="text-center">
-          <p className="mb-4 text-xl text-red-600 dark:text-red-400">{error}</p>
+      <div className="retro-bg flex min-h-screen items-center justify-center">
+        <div className="retro-overlay absolute inset-0" />
+        <div className="relative z-10 text-center">
+          <p className="pixel-text mb-4 text-xl text-white">{error}</p>
           <button
             onClick={fetchScrandle}
-            className="rounded-full bg-zinc-900 px-6 py-3 font-bold text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
+            className="pixel-btn inline-block bg-yellow-400 border-4 border-black px-6 py-3 text-black text-lg hover:bg-yellow-300"
           >
             Попробовать снова
           </button>
@@ -119,8 +120,9 @@ export default function ScrandlePage() {
 
   if (!scrandleData) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
-        <div className="text-xl text-zinc-600 dark:text-zinc-400">
+      <div className="retro-bg flex min-h-screen items-center justify-center">
+        <div className="retro-overlay absolute inset-0" />
+        <div className="pixel-text relative z-10 text-xl text-white">
           Нет доступных пар на сегодня
         </div>
       </div>
@@ -130,26 +132,27 @@ export default function ScrandlePage() {
   const { scranA, scranB } = scrandleData;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="retro-bg min-h-screen">
+      <div className="retro-overlay absolute inset-0" />
+      <div className="relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <Link
             href="/"
-            className="text-2xl font-bold text-zinc-900 transition-colors hover:text-indigo-600 dark:text-zinc-50 dark:hover:text-indigo-400"
+            className="pixel-text text-2xl font-bold text-white transition-colors hover:text-yellow-300"
           >
-            ← бебебендл
+            бебебендл
           </Link>
-          <div className="text-lg font-medium text-zinc-600 dark:text-zinc-400">
+          <div className="pixel-text text-lg font-medium text-white">
             Раунд {currentRound} из 10
           </div>
         </div>
 
         {/* Progress Bar */}
         <div className="mb-12">
-          <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+          <div className="pixel-container h-4 w-full overflow-hidden rounded-none bg-zinc-800 p-0">
             <div
-              className="h-full rounded-full bg-indigo-600 transition-all duration-500 dark:bg-indigo-400"
+              className="h-full bg-yellow-400 transition-all duration-500"
               style={{ width: `${(currentRound / 10) * 100}%` }}
             />
           </div>
@@ -157,10 +160,10 @@ export default function ScrandlePage() {
 
         {/* VS Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-extrabold text-zinc-900 dark:text-zinc-50 sm:text-5xl">
+          <h1 className="pixel-text text-4xl font-extrabold text-white sm:text-5xl">
             Что выберешь?
           </h1>
-          <p className="mt-2 text-lg text-zinc-600 dark:text-zinc-400">
+          <p className="pixel-text mt-2 text-lg text-white">
             Выбери то, что нравится людям больше
           </p>
         </div>
@@ -171,7 +174,7 @@ export default function ScrandlePage() {
           <button
             onClick={() => handleVote(scranA.id)}
             disabled={voting}
-            className="group relative overflow-hidden rounded-2xl border-4 border-transparent bg-white shadow-xl transition-all hover:scale-105 hover:border-indigo-500 hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100 dark:bg-zinc-900"
+            className="pixel-card group relative overflow-hidden rounded-none border-4 border-black bg-white disabled:opacity-50"
           >
             <div className="aspect-square overflow-hidden">
               <img
@@ -181,17 +184,17 @@ export default function ScrandlePage() {
               />
             </div>
             <div className="p-6">
-              <h2 className="mb-2 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+              <h2 className="pixel-text mb-2 text-2xl font-bold text-black">
                 {scranA.name}
               </h2>
-              <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">
+              <p className="mb-4 text-sm text-zinc-700 line-clamp-2">
                 {scranA.description}
               </p>
               <div className="flex items-center justify-between">
-                <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+                <span className="pixel-text text-xl font-bold text-black">
                   {scranA.price.toFixed(2)} ₽
                 </span>
-                <span className="rounded-full bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                <span className="pixel-btn rounded-none bg-yellow-400 px-4 py-2 text-sm font-bold text-black">
                   Выбрать
                 </span>
               </div>
@@ -200,7 +203,7 @@ export default function ScrandlePage() {
 
           {/* VS Badge */}
           <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:block">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-zinc-900 text-3xl font-black text-white shadow-2xl dark:bg-white dark:text-zinc-900">
+            <div className="pixel-btn flex h-20 w-20 items-center justify-center bg-black text-3xl font-black text-white">
               VS
             </div>
           </div>
@@ -209,7 +212,7 @@ export default function ScrandlePage() {
           <button
             onClick={() => handleVote(scranB.id)}
             disabled={voting}
-            className="group relative overflow-hidden rounded-2xl border-4 border-transparent bg-white shadow-xl transition-all hover:scale-105 hover:border-purple-500 hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100 dark:bg-zinc-900"
+            className="pixel-card group relative overflow-hidden rounded-none border-4 border-black bg-white disabled:opacity-50"
           >
             <div className="aspect-square overflow-hidden">
               <img
@@ -219,17 +222,17 @@ export default function ScrandlePage() {
               />
             </div>
             <div className="p-6">
-              <h2 className="mb-2 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+              <h2 className="pixel-text mb-2 text-2xl font-bold text-black">
                 {scranB.name}
               </h2>
-              <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">
+              <p className="mb-4 text-sm text-zinc-700 line-clamp-2">
                 {scranB.description}
               </p>
               <div className="flex items-center justify-between">
-                <span className="text-xl font-bold text-purple-600 dark:text-purple-400">
+                <span className="pixel-text text-xl font-bold text-black">
                   {scranB.price.toFixed(2)} ₽
                 </span>
-                <span className="rounded-full bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                <span className="pixel-btn rounded-none bg-yellow-400 px-4 py-2 text-sm font-bold text-black">
                   Выбрать
                 </span>
               </div>
@@ -239,7 +242,7 @@ export default function ScrandlePage() {
 
         {/* Mobile VS Badge */}
         <div className="mt-8 text-center md:hidden">
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-zinc-900 text-2xl font-black text-white dark:bg-white dark:text-zinc-900">
+          <div className="pixel-btn inline-flex h-16 w-16 items-center justify-center bg-black text-2xl font-black text-white">
             VS
           </div>
         </div>

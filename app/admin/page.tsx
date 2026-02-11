@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { Scran } from "../../db/schema";
 
 type SortField = "id" | "name" | "price" | "numberOfLikes" | "numberOfDislikes" | "approved";
@@ -134,30 +135,31 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
-        <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-8 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-          <h1 className="mb-6 text-2xl font-bold text-black dark:text-zinc-50">
+      <div className="retro-bg flex min-h-screen items-center justify-center">
+        <div className="retro-overlay absolute inset-0" />
+        <div className="pixel-container relative z-10 w-full max-w-md rounded-none border-4 border-black bg-white p-8">
+          <h1 className="pixel-text mb-6 text-2xl font-bold text-black">
             Admin Login
           </h1>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="mb-2 block text-sm font-bold text-black">
                 Password
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-black focus:border-blue-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
+                className="w-full rounded-none border-2 border-black bg-white px-4 py-2 text-black focus:border-yellow-400 focus:outline-none"
                 placeholder="Enter admin password"
               />
             </div>
             {error && (
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              <p className="text-sm font-bold text-red-600">{error}</p>
             )}
             <button
               type="submit"
-              className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
+              className="pixel-btn w-full bg-yellow-400 px-4 py-2 text-lg font-bold text-black hover:bg-yellow-300"
             >
               Login
             </button>
@@ -168,83 +170,92 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-black dark:text-zinc-50">
-            Admin Dashboard
-          </h1>
-          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-            Manage scrans and approve submissions
-          </p>
+    <div className="retro-bg min-h-screen">
+      <div className="retro-overlay absolute inset-0" />
+      <div className="relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="pixel-text text-3xl font-bold text-white">
+              Admin Dashboard
+            </h1>
+            <p className="pixel-text mt-2 text-white">
+              Manage scrans and approve submissions
+            </p>
+          </div>
+          <Link
+            href="/"
+            className="pixel-text text-xl font-bold text-white hover:text-yellow-300"
+          >
+            бебебендл
+          </Link>
         </div>
 
         {loading ? (
-          <div className="flex h-64 items-center justify-center">
-            <div className="text-lg text-zinc-600 dark:text-zinc-400">
+          <div className="pixel-container flex h-64 items-center justify-center rounded-none bg-zinc-900/80">
+            <div className="pixel-text text-lg text-white">
               Loading...
             </div>
           </div>
         ) : (
           <>
-            <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="pixel-container overflow-hidden rounded-none border-4 border-black bg-zinc-900/80">
               <table className="w-full">
-                <thead className="bg-zinc-50 dark:bg-zinc-800">
+                <thead className="bg-zinc-800">
                   <tr>
                     <th
-                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-white hover:bg-zinc-700"
                       onClick={() => handleSort("id")}
                     >
                       ID {getSortIcon("id")}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-white">
                       Image
                     </th>
                     <th
-                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-white hover:bg-zinc-700"
                       onClick={() => handleSort("name")}
                     >
                       Name {getSortIcon("name")}
                     </th>
                     <th
-                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-white hover:bg-zinc-700"
                       onClick={() => handleSort("price")}
                     >
                       Price {getSortIcon("price")}
                     </th>
                     <th
-                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-white hover:bg-zinc-700"
                       onClick={() => handleSort("numberOfLikes")}
                     >
                       Likes {getSortIcon("numberOfLikes")}
                     </th>
                     <th
-                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-white hover:bg-zinc-700"
                       onClick={() => handleSort("numberOfDislikes")}
                     >
                       Dislikes {getSortIcon("numberOfDislikes")}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-white">
                       Rating
                     </th>
                     <th
-                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-white hover:bg-zinc-700"
                       onClick={() => handleSort("approved")}
                     >
                       Status {getSortIcon("approved")}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-white">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                <tbody className="divide-y divide-zinc-700">
                   {scrans.map((scran) => (
                     <tr
                       key={scran.id}
-                      className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                      className="hover:bg-zinc-800/50"
                     >
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-white">
                         {scran.id}
                       </td>
                       <td className="px-6 py-4">
@@ -252,48 +263,48 @@ export default function AdminPage() {
                           <img
                             src={scran.imageUrl}
                             alt={scran.name}
-                            className="h-12 w-12 rounded-lg object-cover"
+                            className="h-12 w-12 rounded-none border-2 border-black object-cover"
                           />
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        <div className="text-sm font-bold text-white">
                           {scran.name}
                         </div>
                         {scran.description && (
-                          <div className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1">
+                          <div className="text-xs text-zinc-400 line-clamp-1">
                             {scran.description}
                           </div>
                         )}
                       </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-white">
                         {scran.price.toFixed(2)} ₽
                       </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-white">
                         👍 {scran.numberOfLikes}
                       </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-white">
                         👎 {scran.numberOfDislikes}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="h-2 w-12 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+                          <div className="h-2 w-12 overflow-hidden rounded-none border border-zinc-600 bg-zinc-700">
                             <div
-                              className="h-full rounded-full bg-green-500"
+                              className="h-full bg-green-500"
                               style={{ width: `${getLikesPercentage(scran)}%` }}
                             />
                           </div>
-                          <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                          <span className="text-xs text-white">
                             {getLikesPercentage(scran)}%
                           </span>
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-6 py-4">
                         <span
-                          className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                          className={`inline-flex rounded-none px-2 py-1 text-xs font-bold ${
                             scran.approved
-                              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                              : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                              ? "bg-green-500 text-white"
+                              : "bg-yellow-400 text-black"
                           }`}
                         >
                           {scran.approved ? "Approved" : "Pending"}
@@ -304,7 +315,7 @@ export default function AdminPage() {
                           {!scran.approved && (
                             <button
                               onClick={() => handleApprove(scran.id)}
-                              className="rounded bg-green-600 px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-green-700"
+                              className="pixel-btn bg-green-500 px-3 py-1 text-sm font-bold text-white hover:bg-green-600"
                             >
                               Approve
                             </button>
@@ -312,7 +323,7 @@ export default function AdminPage() {
                           {scran.approved && (
                             <button
                               onClick={() => handleBan(scran.id)}
-                              className="rounded bg-red-600 px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                              className="pixel-btn bg-red-500 px-3 py-1 text-sm font-bold text-white hover:bg-red-600"
                             >
                               Ban
                             </button>
@@ -327,14 +338,14 @@ export default function AdminPage() {
 
             {totalPages > 1 && (
               <div className="mt-6 flex items-center justify-between">
-                <div className="text-sm text-zinc-600 dark:text-zinc-400">
+                <div className="pixel-text text-sm text-white">
                   Page {currentPage} of {totalPages}
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    className="pixel-btn bg-zinc-800 px-4 py-2 text-sm font-bold text-white hover:bg-zinc-700 disabled:opacity-50"
                   >
                     Previous
                   </button>
@@ -343,10 +354,10 @@ export default function AdminPage() {
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                        className={`pixel-btn px-4 py-2 text-sm font-bold ${
                           currentPage === page
-                            ? "bg-blue-600 text-white"
-                            : "border border-zinc-300 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                            ? "bg-yellow-400 text-black"
+                            : "bg-zinc-800 text-white hover:bg-zinc-700"
                         }`}
                       >
                         {page}
@@ -358,7 +369,7 @@ export default function AdminPage() {
                       setCurrentPage((p) => Math.min(totalPages, p + 1))
                     }
                     disabled={currentPage === totalPages}
-                    className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    className="pixel-btn bg-zinc-800 px-4 py-2 text-sm font-bold text-white hover:bg-zinc-700 disabled:opacity-50"
                   >
                     Next
                   </button>

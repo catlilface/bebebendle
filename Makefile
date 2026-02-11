@@ -5,14 +5,15 @@
 # Default target
 help:
 	@echo "Available commands:"
-	@echo "  make build    - Build all Docker images"
-	@echo "  make up       - Start all services"
-	@echo "  make down     - Stop all services"
-	@echo "  make logs     - View logs from all services"
-	@echo "  make shell    - Open shell in frontend container"
-	@echo "  make migrate  - Run database migrations"
-	@echo "  make clean    - Remove all containers and volumes"
-	@echo "  make restart  - Restart all services"
+	@echo "  make build        - Build all Docker images"
+	@echo "  make up           - Start all services"
+	@echo "  make down         - Stop all services"
+	@echo "  make logs         - View logs from all services"
+	@echo "  make shell        - Open shell in frontend container"
+	@echo "  make migrate      - Run database migrations"
+	@echo "  make new-daily    - Trigger new daily scrandles via API"
+	@echo "  make clean        - Remove all containers and volumes"
+	@echo "  make restart      - Restart all services"
 
 # Build all images
 build:
@@ -84,3 +85,13 @@ status:
 # Validate configuration
 config:
 	docker compose config
+
+# Trigger new daily scrandles via API
+new-daily:
+	@curl -s -X GET http://localhost:3000/api/cron/daily \
+		-H "Authorization: Bearer $(shell echo $$CRON_SECRET)" | jq .
+
+# Trigger new daily scrandles (without jq)
+new-daily-raw:
+	@curl -s -X GET http://localhost:3000/api/cron/daily \
+		-H "Authorization: Bearer $(shell echo $$CRON_SECRET)"
