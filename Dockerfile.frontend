@@ -9,11 +9,14 @@ RUN bun install
 COPY . .
 
 RUN bun run build
+RUN bunx drizzle-kit migrate
+RUN bunx drizzle-kit push
 
 FROM oven/bun:latest AS production
 
 WORKDIR /app
 
+COPY drizzle.config.ts /app
 COPY --from=base /app/.next ./.next
 COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/package.json ./package.json

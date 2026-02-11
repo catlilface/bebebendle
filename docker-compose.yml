@@ -1,5 +1,4 @@
 services:
-  # Frontend Next.js application
   frontend:
     build:
       context: .
@@ -10,14 +9,10 @@ services:
     env_file:
       - .env
     volumes:
-      # Shared database volume
       - ./db:/app/db
-      # Persist Next.js cache
       - next-cache:/app/.next/cache
-    networks:
-      - bebebendle-network
     restart: unless-stopped
-  # Python Telegram Bot
+
   bot:
     build:
       context: ./bot
@@ -26,15 +21,12 @@ services:
     env_file:
       - .env
     volumes:
-      # Shared database volume (read-write for bot)
       - ./db:/app/db
-    networks:
-      - bebebendle-network
     restart: unless-stopped
     depends_on:
       - frontend
+    network_mode: bridge
 
-  # Optional: Database backup service
   db-backup:
     image: alpine:latest
     container_name: bebebendle-db-backup
@@ -49,16 +41,9 @@ services:
           find /backups -name '*.sqlite' -mtime +7 -delete
         done
       "
-    networks:
-      - bebebendle-network
     restart: unless-stopped
     profiles:
       - backup
 
 volumes:
   next-cache:
-  db-data:
-
-networks:
-  bebebendle-network:
-    driver: bridge
