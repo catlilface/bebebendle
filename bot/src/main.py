@@ -12,7 +12,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
+from aiogram.types import KeyboardButton, Message, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from dotenv import load_dotenv
 
 from database import Database
@@ -33,13 +33,13 @@ if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN environment variable is not set")
 
 # Initialize bot and dispatcher
-bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
+bot = Bot(token=BOT_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 router = Router()
 
 # Initialize database
-db = Database("../db/bebendle.sqlite")
+db = Database("./db/bebendle.sqlite")
 
 
 class SuggestStates(StatesGroup):
@@ -66,13 +66,12 @@ async def database_session():
 async def cmd_start(message: Message) -> None:
     """Handle /start command."""
     welcome_text = (
-        "👋 Привет! Я бот бебендла.\n\n"
-        "Я помогу тебе предложить новое блюдо для ежедневной игры.\n\n"
+        "👋 Привет! Я овсянка, бот бебебендла.\n\n"
+        "Я помогу тебе предложить новое блюдо для дейлика.\n\n"
         "📋 Доступные команды:\n"
         "/suggest - Предложить новое блюдо\n"
         "/status - Проверить статус твоих предложений\n"
         "/help - Показать помощь\n\n"
-        "Начни с команды /suggest!"
     )
     await message.answer(welcome_text)
 
@@ -293,7 +292,6 @@ async def process_confirmation(message: Message, state: FSMContext) -> None:
                     name=data["name"],
                     description=data.get("description"),
                     price=data["price"],
-                    telegram_id=data["telegram_id"],
                 )
 
             await message.answer(

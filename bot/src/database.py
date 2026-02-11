@@ -38,9 +38,8 @@ class Database:
         self,
         image_url: str,
         name: str,
-        description: Optional[str],
-        price: float,
-        telegram_id: str,
+        description: str | None,
+        price: float
     ) -> int:
         """Insert a new scran into the database.
 
@@ -61,10 +60,10 @@ class Database:
             """
             INSERT INTO scrans (
                 image_url, name, description, price, 
-                number_of_likes, number_of_dislikes, approved, telegram_id
-            ) VALUES (?, ?, ?, ?, 0, 0, 0, ?)
+                number_of_likes, number_of_dislikes, approved
+            ) VALUES (?, ?, ?, ?, 0, 0, 0)
             """,
-            (image_url, name, description, price, telegram_id),
+            (image_url, name, description, price),
         )
         await self.connection.commit()
 
@@ -88,8 +87,8 @@ class Database:
 
         async with self.connection.execute(
             """
-            SELECT id, name, approved 
-            FROM scrans 
+            SELECT id, name, approved
+            FROM scrans
             WHERE telegram_id = ?
             ORDER BY id DESC
             LIMIT 20
