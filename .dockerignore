@@ -48,5 +48,4 @@ docker-compose*.yml
 
 # Bot directory (separate service)
 bot/
-scripts/
 backups/

@@ -11,6 +11,7 @@ help:
 	@echo "  make logs         - View logs from all services"
 	@echo "  make shell        - Open shell in frontend container"
 	@echo "  make migrate      - Run database migrations"
+	@echo "  make migrate-images - Migrate external images to local storage"
 	@echo "  make new-daily    - Trigger new daily scrandles via API"
 	@echo "  make clean        - Remove all containers and volumes"
 	@echo "  make restart      - Restart all services"
@@ -59,6 +60,10 @@ shell-bot:
 migrate:
 	docker compose exec frontend bunx drizzle-kit migrate
 	docker compose exec frontend bunx drizzle-kit push
+
+# Migrate external images to local storage
+migrate-images:
+	docker compose exec frontend bun run scripts/migrate-images.ts
 
 # Generate migration
 generate-migration:

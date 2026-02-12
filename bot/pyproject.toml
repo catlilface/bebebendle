@@ -5,6 +5,7 @@ description = "Telegram bot for bebebendle - daily food comparison game"
 requires-python = ">=3.11"
 dependencies = [
     "aiogram>=3.0.0",
+    "aiofiles>=24.0.0",
     "aiosqlite>=0.20.0",
     "python-dotenv>=1.0.0",
     "pydantic>=2.0.0",

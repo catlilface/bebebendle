@@ -3,8 +3,12 @@
 import asyncio
 import logging
 import os
+import uuid
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
+
+import aiofiles
 
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.enums import ParseMode
@@ -12,7 +16,18 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import KeyboardButton, Message, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    InputMediaPhoto,
+    KeyboardButton,
+    Message,
+    ReplyKeyboardMarkup,
+    ReplyKeyboardRemove,
+)
+from aiogram.exceptions import TelegramAPIError
+from aiogram.utils.media_group import MediaGroupBuilder
 from dotenv import load_dotenv
 
 from database import Database
@@ -40,6 +55,44 @@ router = Router()
 
 # Initialize database
 db = Database("./db/bebendle.sqlite")
+
+# Upload configuration
+UPLOADS_DIR = Path("/app/public/uploads")
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+async def save_uploaded_photo(file_id: str) -> str:
+    """Download photo from Telegram and save locally.
+
+    Args:
+        file_id: Telegram file ID
+
+    Returns:
+        Local URL path (e.g., /uploads/uuid.jpg)
+    """
+    # Get file info from Telegram
+    file = await bot.get_file(file_id)
+
+    if not file.file_path:
+        raise ValueError("File path not available")
+
+    # Download file content
+    file_content = await bot.download_file(file.file_path)
+
+    if not file_content:
+        raise ValueError("Failed to download file content")
+
+    # Generate unique filename
+    file_ext = Path(file.file_path).suffix or ".jpg"
+    filename = f"{uuid.uuid4()}{file_ext}"
+    local_path = UPLOADS_DIR / filename
+
+    # Save file locally
+    async with aiofiles.open(local_path, "wb") as f:
+        await f.write(file_content.read())
+
+    # Return URL path (accessible via Next.js)
+    return f"/uploads/{filename}"
 
 
 class SuggestStates(StatesGroup):
@@ -93,9 +146,121 @@ async def cmd_help(message: Message) -> None:
         "• Не допускаются неприемлемые изображения\n\n"
         "Команды:\n"
         "/suggest - Предложить блюдо\n"
+        "/vote - Проголосовать за блюда\n"
         "/help - Эта помощь"
     )
     await message.answer(help_text)
+
+
+@router.message(Command("vote"))
+async def cmd_vote(message: Message) -> None:
+    """Handle /vote command - start voting."""
+    try:
+        async with database_session() as database:
+            # Get 10 scrans with least votes
+            least_voted = await database.get_least_voted_scrans(limit=10)
+
+            if len(least_voted) < 2:
+                await message.answer(
+                    "😔 Пока недостаточно блюд для голосования. "
+                    "Попробуй позже или предложи свое блюдо через /suggest"
+                )
+                return
+
+            # Select random scran from least voted
+            import random
+
+            scran1 = random.choice(least_voted)
+
+            # Get random opponent (different from scran1)
+            scran2 = await database.get_random_scran(exclude_id=scran1["id"])
+
+            if not scran2:
+                await message.answer(
+                    "😔 Пока недостаточно блюд для голосования. "
+                    "Попробуй позже или предложи свое блюдо через /suggest"
+                )
+                return
+
+            # Create media group with both photos
+            media_group = MediaGroupBuilder(caption="Что бы съел?")
+            media_group.add_photo(media=scran1["image_url"])
+            media_group.add_photo(media=scran2["image_url"])
+
+            # Create inline keyboard with vote buttons
+            keyboard = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="первый",
+                            callback_data=f"vote:{scran1['id']}:{scran2['id']}:1",
+                        ),
+                        InlineKeyboardButton(
+                            text="второй",
+                            callback_data=f"vote:{scran1['id']}:{scran2['id']}:2",
+                        ),
+                    ]
+                ]
+            )
+
+            # Send media group and get the message
+            messages = await message.answer_media_group(media_group.build())
+
+            # Send buttons as a reply to the last photo
+            if messages:
+                await message.answer(
+                    "Выбери, что бы съел:",
+                    reply_markup=keyboard,
+                    reply_to_message_id=messages[-1].message_id,
+                )
+
+    except Exception as e:
+        logger.error(f"Error in vote command: {e}")
+        await message.answer("❌ Произошла ошибка при загрузке блюд. Попробуй позже.")
+
+
+@router.callback_query(F.data.startswith("vote:"))
+async def process_vote(callback: CallbackQuery) -> None:
+    """Handle vote callback."""
+    try:
+        if not callback.data:
+            await callback.answer("Ошибка в данных голосования")
+            return
+
+        # Parse callback data: vote:scran1_id:scran2_id:choice
+        data_parts = callback.data.split(":")
+        if len(data_parts) != 4:
+            await callback.answer("Ошибка в данных голосования")
+            return
+
+        _, scran1_id, scran2_id, choice = data_parts
+        scran1_id = int(scran1_id)
+        scran2_id = int(scran2_id)
+
+        async with database_session() as database:
+            if choice == "1":
+                # First scran gets like, second gets dislike
+                await database.vote_for_scran(scran1_id, is_like=True)
+                await database.vote_for_scran(scran2_id, is_like=False)
+            else:
+                # Second scran gets like, first gets dislike
+                await database.vote_for_scran(scran2_id, is_like=True)
+                await database.vote_for_scran(scran1_id, is_like=False)
+
+        # Replace buttons with confirmation text
+        if callback.message and isinstance(callback.message, Message):
+            try:
+                await callback.message.edit_text(
+                    "✅ Голос принят! Используй /vote чтобы проголосовать еще раз."
+                )
+            except TelegramAPIError:
+                # Message might be too old or inaccessible
+                pass
+        await callback.answer()
+
+    except Exception as e:
+        logger.error(f"Error processing vote: {e}")
+        await callback.answer("❌ Ошибка при сохранении голоса")
 
 
 @router.message(Command("suggest"))
@@ -142,12 +307,10 @@ async def process_photo(message: Message, state: FSMContext) -> None:
     photo = message.photo[-1]
     file_id = photo.file_id
 
-    # Get file info from Telegram
+    # Download and save photo locally
     try:
-        file = await bot.get_file(file_id)
-        file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file.file_path}"
-
-        await state.update_data(photo_url=file_url)
+        local_url = await save_uploaded_photo(file_id)
+        await state.update_data(photo_url=local_url)
 
         cancel_keyboard = ReplyKeyboardMarkup(
             keyboard=[[KeyboardButton(text="❌ Отменить")]],
@@ -293,9 +456,7 @@ async def process_confirmation(message: Message, state: FSMContext) -> None:
                 )
 
             await message.answer(
-                "🎉 Отлично!\n\n"
-                "Твоё предложение отправлено на рассмотрение администратору.\n\n"
-                "Используй /status чтобы проверить статус.",
+                "🎉 Отлично!\n\nТвоё предложение отправлено на рассмотрение администратору.",
                 reply_markup=ReplyKeyboardRemove(),
             )
             logger.info(f"New scran suggested by user {data['telegram_id']}: {data['name']}")

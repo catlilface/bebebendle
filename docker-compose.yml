@@ -10,6 +10,7 @@ services:
       - .env
     volumes:
       - ./db:/app/db
+      - ./public/uploads:/app/public/uploads
       - next-cache:/app/.next/cache
     restart: unless-stopped
 
@@ -22,6 +23,7 @@ services:
       - .env
     volumes:
       - ./db:/app/db
+      - ./public/uploads:/app/public/uploads
     restart: unless-stopped
     depends_on:
       - frontend

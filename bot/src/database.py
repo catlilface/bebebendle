@@ -35,11 +35,7 @@ class Database:
             logger.debug("Database connection closed")
 
     async def insert_scran(
-        self,
-        image_url: str,
-        name: str,
-        description: str | None,
-        price: float
+        self, image_url: str, name: str, description: str | None, price: float
     ) -> int:
         """Insert a new scran into the database.
 
@@ -153,4 +149,122 @@ class Database:
         await self.connection.commit()
 
         logger.info(f"Approved scran {scran_id}")
+        return True
+
+    async def get_least_voted_scrans(self, limit: int = 10) -> list[dict]:
+        """Get scrans with least votes (likes + dislikes).
+
+        Args:
+            limit: Number of scrans to return
+
+        Returns:
+            List of scran dictionaries with image_url
+        """
+        if not self.connection:
+            raise RuntimeError("Database not connected")
+
+        async with self.connection.execute(
+            """
+            SELECT id, image_url, name, description, price,
+                   number_of_likes, number_of_dislikes,
+                   (number_of_likes + number_of_dislikes) as total_votes
+            FROM scrans
+            WHERE approved = 1
+            ORDER BY total_votes ASC, RANDOM()
+            LIMIT ?
+            """,
+            (limit,),
+        ) as cursor:
+            rows = await cursor.fetchall()
+
+        return [
+            {
+                "id": row[0],
+                "image_url": row[1],
+                "name": row[2],
+                "description": row[3],
+                "price": row[4],
+                "number_of_likes": row[5],
+                "number_of_dislikes": row[6],
+            }
+            for row in rows
+        ]
+
+    async def get_random_scran(self, exclude_id: int | None = None) -> dict | None:
+        """Get a random approved scran.
+
+        Args:
+            exclude_id: Optional scran ID to exclude
+
+        Returns:
+            Scran dictionary or None if not found
+        """
+        if not self.connection:
+            raise RuntimeError("Database not connected")
+
+        if exclude_id:
+            async with self.connection.execute(
+                """
+                SELECT id, image_url, name, description, price,
+                       number_of_likes, number_of_dislikes
+                FROM scrans
+                WHERE approved = 1 AND id != ?
+                ORDER BY RANDOM()
+                LIMIT 1
+                """,
+                (exclude_id,),
+            ) as cursor:
+                row = await cursor.fetchone()
+        else:
+            async with self.connection.execute(
+                """
+                SELECT id, image_url, name, description, price,
+                       number_of_likes, number_of_dislikes
+                FROM scrans
+                WHERE approved = 1
+                ORDER BY RANDOM()
+                LIMIT 1
+                """,
+            ) as cursor:
+                row = await cursor.fetchone()
+
+        if not row:
+            return None
+
+        return {
+            "id": row[0],
+            "image_url": row[1],
+            "name": row[2],
+            "description": row[3],
+            "price": row[4],
+            "number_of_likes": row[5],
+            "number_of_dislikes": row[6],
+        }
+
+    async def vote_for_scran(self, scran_id: int, is_like: bool) -> bool:
+        """Add a like or dislike to a scran.
+
+        Args:
+            scran_id: Scran ID to vote for
+            is_like: True for like, False for dislike
+
+        Returns:
+            True if vote was recorded successfully
+        """
+        if not self.connection:
+            raise RuntimeError("Database not connected")
+
+        column = "number_of_likes" if is_like else "number_of_dislikes"
+
+        await self.connection.execute(
+            f"""
+            UPDATE scrans
+            SET {column} = {column} + 1
+            WHERE id = ?
+            """,
+            (scran_id,),
+        )
+        await self.connection.commit()
+
+        logger.info(f"{'Like' if is_like else 'Dislike'} added to scran {scran_id}")
         return True

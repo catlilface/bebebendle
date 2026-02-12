@@ -1,74 +1,57 @@
 "use client";
 
-import Cookies from "js-cookie";
+const COOKIE_NAME = "daily_result";
+const COOKIE_EXPIRES = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
-export interface DailyGameResult {
+type DailyResult = {
   date: string;
   score: number;
   totalRounds: number;
-  userAnswers: {
+  userAnswers: Array<{
     roundNumber: number;
     isCorrect: boolean;
     chosenScranId: number;
     correctScranId: number;
     percentageA: number;
     percentageB: number;
-  }[];
-  playedAt: string;
-}
-
-const DAILY_GAME_COOKIE = "daily_game_result";
-const COOKIE_EXPIRES = 1; // 1 day
+  }>;
+};
 
 export function hasPlayedToday(): boolean {
+  if (typeof document === "undefined") return false;
+
   const result = getTodayResult();
   if (!result) return false;
-  
+
   const today = new Date().toISOString().split("T")[0];
   return result.date === today;
 }
 
-export function getTodayResult(): DailyGameResult | null {
+export function saveDailyResult(result: DailyResult): void {
+  if (typeof document === "undefined") return;
+
+  const expires = new Date(Date.now() + COOKIE_EXPIRES).toUTCString();
+  const cookieValue = encodeURIComponent(JSON.stringify(result));
+  document.cookie = `${COOKIE_NAME}=${cookieValue}; expires=${expires}; path=/; SameSite=Strict`;
+}
+
+export function getTodayResult(): DailyResult | null {
+  if (typeof document === "undefined") return null;
+
+  const cookies = document.cookie.split(";");
+  const cookie = cookies.find((c) => c.trim().startsWith(`${COOKIE_NAME}=`));
+
+  if (!cookie) return null;
+
   try {
-    const cookieValue = Cookies.get(DAILY_GAME_COOKIE);
-    if (!cookieValue) return null;
-    
-    const result: DailyGameResult = JSON.parse(cookieValue);
+    const value = cookie.split("=")[1];
+    const result = JSON.parse(decodeURIComponent(value)) as DailyResult;
+
     const today = new Date().toISOString().split("T")[0];
-    
-    // Check if the result is from today
-    if (result.date === today) {
-      return result;
-    }
-    
-    // Clear old cookie if it's from a different day
-    Cookies.remove(DAILY_GAME_COOKIE);
-    return null;
+    if (result.date !== today) return null;
+
+    return result;
   } catch {
     return null;
   }
-}
-
-export function saveDailyResult(result: Omit<DailyGameResult, "playedAt">): void {
-  const data: DailyGameResult = {
-    ...result,
-    playedAt: new Date().toISOString(),
-  };
-  
-  // Set cookie to expire at end of day
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
-  const expiresInHours = (tomorrow.getTime() - now.getTime()) / (1000 * 60 * 60);
-  
-  Cookies.set(DAILY_GAME_COOKIE, JSON.stringify(data), {
-    expires: expiresInHours / 24, // Convert hours to days for js-cookie
-    sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
-  });
-}
-
-export function clearDailyResult(): void {
-  Cookies.remove(DAILY_GAME_COOKIE);
 }
