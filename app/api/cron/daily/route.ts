@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db, scrans, dailyScrandles } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 // This route is called by Vercel Cron to create daily scrandle with 10 rounds
 export async function GET(request: Request) {
@@ -27,15 +27,20 @@ export async function GET(request: Request) {
       });
     }
 
-    // Get all approved scrans
+    // Get approved scrans with at least 3 total votes (likes + dislikes > 2)
     const approvedScrans = await db
       .select()
       .from(scrans)
-      .where(eq(scrans.approved, true));
+      .where(
+        and(
+          eq(scrans.approved, true),
+          sql`${scrans.numberOfLikes} + ${scrans.numberOfDislikes} > 2`
+        )
+      );
 
     if (approvedScrans.length < 20) {
       return NextResponse.json(
-        { error: "Not enough approved scrans (need at least 20)" },
+        { error: "Not enough scrans with sufficient votes (need at least 20 scrans with 3+ votes)" },
         { status: 400 }
       );
     }
