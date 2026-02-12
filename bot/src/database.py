@@ -268,3 +268,51 @@ class Database:
 
         logger.info(f"{'Like' if is_like else 'Dislike'} added to scran {scran_id}")
         return True
+
+    async def get_voted_scran_ids(self, telegram_id: str) -> list[int]:
+        """Get all scran IDs that a user has voted for.
+
+        Args:
+            telegram_id: Telegram user ID
+
+        Returns:
+            List of scran IDs
+        """
+        if not self.connection:
+            raise RuntimeError("Database not connected")
+
+        async with self.connection.execute(
+            """
+            SELECT scran_id
+            FROM telegram_votes
+            WHERE telegram_id = ?
+            """,
+            (telegram_id,),
+        ) as cursor:
+            rows = await cursor.fetchall()
+
+        return [row[0] for row in rows]
+
+    async def record_telegram_vote(self, telegram_id: str, scran_id: int, is_like: bool) -> None:
+        """Record a vote from Telegram user.
+
+        Args:
+            telegram_id: Telegram user ID
+            scran_id: Scran ID that was voted for
+            is_like: True for like, False for dislike
+        """
+        if not self.connection:
+            raise RuntimeError("Database not connected")
+
+        from datetime import datetime
+
+        await self.connection.execute(
+            """
+            INSERT INTO telegram_votes (telegram_id, scran_id, is_like, created_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (telegram_id, scran_id, 1 if is_like else 0, datetime.now().isoformat()),
+        )
+        await self.connection.commit()
+
+        logger.info(f"Telegram vote recorded: user {telegram_id}, scran {scran_id}, like={is_like}")

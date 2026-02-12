@@ -175,21 +175,33 @@ async def cmd_help(message: Message) -> None:
 async def cmd_vote(message: Message) -> None:
     """Handle /vote command - start voting for a single scran."""
     try:
-        async with database_session() as database:
-            # Get 10 scrans with least votes
-            least_voted = await database.get_least_voted_scrans(limit=10)
+        if not message.from_user:
+            await message.answer("Ошибка: не удалось получить информацию о пользователе.")
+            return
 
-            if not least_voted:
+        telegram_id = str(message.from_user.id)
+
+        async with database_session() as database:
+            # Get scrans user has already voted for
+            voted_ids = await database.get_voted_scran_ids(telegram_id)
+
+            # Get 50 scrans with least votes (more than needed to filter)
+            least_voted = await database.get_least_voted_scrans(limit=50)
+
+            # Filter out already voted scrans
+            available_scrans = [s for s in least_voted if s["id"] not in voted_ids]
+
+            if not available_scrans:
                 await message.answer(
-                    "😔 Пока недостаточно блюд для голосования. "
-                    "Попробуй позже или предложи свое блюдо через /suggest"
+                    "🎉 Ты проголосовал за все доступные блюда! "
+                    "Приходи позже, когда появятся новые."
                 )
                 return
 
-            # Select random scran from least voted
+            # Select random scran from available
             import random
 
-            scran = random.choice(least_voted)
+            scran = random.choice(available_scrans)
 
             # Build caption with name, description and price
             caption = f"*{scran['name']}*"
@@ -237,6 +249,12 @@ async def process_vote(callback: CallbackQuery) -> None:
             await callback.answer("Ошибка в данных голосования")
             return
 
+        if not callback.from_user:
+            await callback.answer("Ошибка: не удалось получить информацию о пользователе")
+            return
+
+        telegram_id = str(callback.from_user.id)
+
         # Parse callback data: vote:scran_id:like|dislike
         data_parts = callback.data.split(":")
         if len(data_parts) != 3:
@@ -248,7 +266,17 @@ async def process_vote(callback: CallbackQuery) -> None:
         is_like = vote_type == "like"
 
         async with database_session() as database:
+            # Check if user already voted for this scran
+            voted_ids = await database.get_voted_scran_ids(telegram_id)
+            if scran_id in voted_ids:
+                await callback.answer("Ты уже голосовал за это блюдо!")
+                return
+
+            # Update scran likes/dislikes
             await database.vote_for_scran(scran_id, is_like=is_like)
+
+            # Record the vote in telegram_votes table
+            await database.record_telegram_vote(telegram_id, scran_id, is_like)
 
         # Replace buttons with confirmation text
         if callback.message and isinstance(callback.message, Message):
@@ -261,7 +289,11 @@ async def process_vote(callback: CallbackQuery) -> None:
             except TelegramAPIError:
                 # Message might be too old or inaccessible
                 pass
+
         await callback.answer()
+
+        # Show next scran after successful vote
+        await cmd_vote(callback.message)
 
     except Exception as e:
         logger.error(f"Error processing vote: {e}")

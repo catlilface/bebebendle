@@ -46,10 +46,21 @@ export const dailyUserResults = sqliteTable("daily_user_results", {
   createdAt: text("created_at").notNull(),
 });
 
+export const telegramVotes = sqliteTable("telegram_votes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  telegramId: text("telegram_id").notNull(),
+  scranId: integer("scran_id").notNull(),
+  isLike: integer("is_like", { mode: "boolean" }).notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => ({
+  uniqueVote: uniqueIndex("unique_telegram_vote").on(table.telegramId, table.scranId),
+}));
+
 export type Scran = typeof scrans.$inferSelect;
 export type DailyScrandle = typeof dailyScrandles.$inferSelect;
 export type ScrandleVote = typeof scrandleVotes.$inferSelect;
 export type DailyUserResult = typeof dailyUserResults.$inferSelect;
+export type TelegramVote = typeof telegramVotes.$inferSelect;
 
 export function getLikesPercentage(scran: Scran): number {
   const total = scran.numberOfLikes + scran.numberOfDislikes;
