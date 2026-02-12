@@ -25,6 +25,7 @@ from aiogram.types import (
     Message,
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
+    FSInputFile,
 )
 from aiogram.exceptions import TelegramAPIError
 from aiogram.utils.media_group import MediaGroupBuilder
@@ -95,6 +96,24 @@ async def save_uploaded_photo(file_id: str) -> str:
     return f"/uploads/{filename}"
 
 
+def get_media_input(image_url: str) -> str | FSInputFile:
+    """Get proper media input for Telegram API.
+
+    Args:
+        image_url: Image URL (can be local path like /uploads/xxx.jpg or external URL)
+
+    Returns:
+        FSInputFile for local paths, or URL string for external URLs
+    """
+    if image_url.startswith("/uploads/"):
+        # Local file - use FSInputFile
+        local_path = UPLOADS_DIR / image_url.replace("/uploads/", "")
+        return FSInputFile(str(local_path))
+    else:
+        # External URL - use as is
+        return image_url
+
+
 class SuggestStates(StatesGroup):
     """States for the suggest scran wizard."""
 
@@ -154,13 +173,13 @@ async def cmd_help(message: Message) -> None:
 
 @router.message(Command("vote"))
 async def cmd_vote(message: Message) -> None:
-    """Handle /vote command - start voting."""
+    """Handle /vote command - start voting for a single scran."""
     try:
         async with database_session() as database:
             # Get 10 scrans with least votes
             least_voted = await database.get_least_voted_scrans(limit=10)
 
-            if len(least_voted) < 2:
+            if not least_voted:
                 await message.answer(
                     "😔 Пока недостаточно блюд для голосования. "
                     "Попробуй позже или предложи свое блюдо через /suggest"
@@ -170,53 +189,44 @@ async def cmd_vote(message: Message) -> None:
             # Select random scran from least voted
             import random
 
-            scran1 = random.choice(least_voted)
+            scran = random.choice(least_voted)
 
-            # Get random opponent (different from scran1)
-            scran2 = await database.get_random_scran(exclude_id=scran1["id"])
+            # Build caption with name, description and price
+            caption = f"*{scran['name']}*"
+            if scran.get("description"):
+                caption += f"\n\n{scran['description']}"
+            caption += f"\n\n💰 {scran['price']:.2f} ₽"
 
-            if not scran2:
-                await message.answer(
-                    "😔 Пока недостаточно блюд для голосования. "
-                    "Попробуй позже или предложи свое блюдо через /suggest"
-                )
-                return
+            # Handle local files vs external URLs
+            media = get_media_input(scran["image_url"])
 
-            # Create media group with both photos
-            media_group = MediaGroupBuilder(caption="Что бы съел?")
-            media_group.add_photo(media=scran1["image_url"])
-            media_group.add_photo(media=scran2["image_url"])
-
-            # Create inline keyboard with vote buttons
+            # Create inline keyboard with like/dislike buttons
             keyboard = InlineKeyboardMarkup(
                 inline_keyboard=[
                     [
                         InlineKeyboardButton(
-                            text="первый",
-                            callback_data=f"vote:{scran1['id']}:{scran2['id']}:1",
+                            text="🤩 Слопал бы",
+                            callback_data=f"vote:{scran['id']}:like",
                         ),
                         InlineKeyboardButton(
-                            text="второй",
-                            callback_data=f"vote:{scran1['id']}:{scran2['id']}:2",
+                            text="💩 Слоп",
+                            callback_data=f"vote:{scran['id']}:dislike",
                         ),
                     ]
                 ]
             )
 
-            # Send media group and get the message
-            messages = await message.answer_media_group(media_group.build())
-
-            # Send buttons as a reply to the last photo
-            if messages:
-                await message.answer(
-                    "Выбери, что бы съел:",
-                    reply_markup=keyboard,
-                    reply_to_message_id=messages[-1].message_id,
-                )
+            # Send photo with caption and buttons
+            await message.answer_photo(
+                photo=media,
+                caption=caption,
+                reply_markup=keyboard,
+                parse_mode="Markdown",
+            )
 
     except Exception as e:
         logger.error(f"Error in vote command: {e}")
-        await message.answer("❌ Произошла ошибка при загрузке блюд. Попробуй позже.")
+        await message.answer("❌ Произошла ошибка при загрузке блюда. Попробуй позже.")
 
 
 @router.callback_query(F.data.startswith("vote:"))
@@ -227,31 +237,26 @@ async def process_vote(callback: CallbackQuery) -> None:
             await callback.answer("Ошибка в данных голосования")
             return
 
-        # Parse callback data: vote:scran1_id:scran2_id:choice
+        # Parse callback data: vote:scran_id:like|dislike
         data_parts = callback.data.split(":")
-        if len(data_parts) != 4:
+        if len(data_parts) != 3:
             await callback.answer("Ошибка в данных голосования")
             return
 
-        _, scran1_id, scran2_id, choice = data_parts
-        scran1_id = int(scran1_id)
-        scran2_id = int(scran2_id)
+        _, scran_id, vote_type = data_parts
+        scran_id = int(scran_id)
+        is_like = vote_type == "like"
 
         async with database_session() as database:
-            if choice == "1":
-                # First scran gets like, second gets dislike
-                await database.vote_for_scran(scran1_id, is_like=True)
-                await database.vote_for_scran(scran2_id, is_like=False)
-            else:
-                # Second scran gets like, first gets dislike
-                await database.vote_for_scran(scran2_id, is_like=True)
-                await database.vote_for_scran(scran1_id, is_like=False)
+            await database.vote_for_scran(scran_id, is_like=is_like)
 
         # Replace buttons with confirmation text
         if callback.message and isinstance(callback.message, Message):
             try:
-                await callback.message.edit_text(
-                    "✅ Голос принят! Используй /vote чтобы проголосовать еще раз."
+                current_caption = callback.message.caption or ""
+                await callback.message.edit_caption(
+                    caption=current_caption + "\n\n✅ Голос принят!",
+                    reply_markup=None,
                 )
             except TelegramAPIError:
                 # Message might be too old or inaccessible
