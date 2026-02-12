@@ -1,114 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+![alt text](./public/бебендл.webp)
 
-## Getting Started
+# Bebebendle
 
-First, run the development server:
+Scrandle по еде зрителей стримера Olesha. Каждый день — новый дейлик с 10 раундами.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Что это?
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Игра, в которой нужно угадать какое из двух блюд нравится больше зрителям. 10 раундов в день, можно играть только раз в сутки. После прохождения видишь свой результат и сравниваешь со средним по всем игрокам.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Развертывание
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-## 🤖 Telegram Bot
-
-This project includes a Python Telegram bot for users to suggest new food items.
-
-### Bot Features
-- **/suggest** - Multi-step wizard to submit new scran with photo, name, description, and price
-- **/status** - Check status of pending suggestions
-- **/help** - Show help information
-
-### Bot Setup
-
-The bot is located in the `bot/` directory and uses:
-- **Python 3.11+** with [uv](https://docs.astral.sh/uv/) package manager
-- **aiogram** - Async Telegram Bot framework
-- **aiosqlite** - Async SQLite driver
-- Shared database with the web frontend
-
-See [bot/README.md](bot/README.md) for detailed setup instructions.
-
-### Quick Start
+Требования: Docker + Docker Compose
 
 ```bash
-cd bot
+# Скопировать и настроить переменные окружения
 cp .env.example .env
-# Edit .env and add your BOT_TOKEN
-uv sync
-uv run python src/main.py
+# Отредактировать .env (BOT_TOKEN, ADMIN_PASSWORD, CRON_SECRET)
+
+# Собрать и запустить
+make up-build
+
+# Применить миграции БД
+make migrate
 ```
 
-The bot connects to the same SQLite database (`db/bebendle.sqlite`) as the Next.js frontend, allowing seamless integration between user submissions and the admin approval workflow.
+Приложение доступно на http://localhost:3000
 
-## 🐳 Docker Setup
+## Makefile команды
 
-The easiest way to run the entire application (frontend + bot) is using Docker Compose.
+| Команда | Описание |
+|---------|----------|
+| `make up-build` | Собрать и запустить все сервисы |
+| `make down` | Остановить сервисы |
+| `make logs` | Просмотр логов |
+| `make migrate` | Применить миграции БД |
+| `make new-daily` | Сгенерировать новый дейлик вручную |
 
-### Quick Start with Docker
+## Как работает
 
-```bash
-# 1. Clone the repository
-git clone <repository-url>
-cd bebebendle
+1. Каждый день в 00:00 генерируется новый дейлик — 10 случайных пар блюд
+2. Игрок выбирает одно из двух блюд в каждом раунде
+3. Система считает процент голосов за каждое блюдо
+4. Если выбрал блюдо с большим процентом — раунд засчитан
+5. После 10 раундов показывается результат и сравнение со средним
 
-# 2. Setup environment
-cp .env.example .env
-# Edit .env with your BOT_TOKEN, ADMIN_PASSWORD, and CRON_SECRET
+## Структура
 
-# 3. Start all services
-docker-compose up --build -d
+- `app/` — Next.js фронтенд
+- `db/` — SQLite база данных + Drizzle ORM
+- `bot/` — Telegram бот для предложения новых блюд
 
-# 4. Access the application
-# Frontend: http://localhost:3000
-# Admin: http://localhost:3000/admin
-```
 
-### Docker Services
+## TODO
 
-- **frontend** - Next.js application (port 3000)
-- **bot** - Python Telegram bot
-- **db-backup** (optional) - Automated database backups
+- [x] Прогружаются картинки
+- [x] Настроить крон
+- [x] Сделать победу при 50/50
+- [ ] Добавить конструктор дейликов
+- [ ] Картинки съезжают на мобилке
+- [ ] Добавить число публикаций
+- [x] Автопродолжение после голосования в боте
+- [ ] Сделать фильтрацию по еде в голосовалке
+- [ ] Сделать картинки нестатичными
 
-### Useful Docker Commands
 
-```bash
-# View logs
-docker-compose logs -f
+## Лицензия
 
-# Stop services
-docker-compose down
-
-# Restart with updates
-docker-compose up -d --build
-
-# Access database shell
-docker-compose exec frontend bunx drizzle-kit migrate
-```
-
-See [DOCKER.md](DOCKER.md) for detailed Docker documentation.
+MIT

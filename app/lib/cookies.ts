@@ -1,7 +1,6 @@
 "use client";
 
-const COOKIE_NAME = "daily_result";
-const COOKIE_EXPIRES = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+const COOKIE_NAME = "daily_bebendle";
 
 type DailyResult = {
   date: string;
@@ -30,7 +29,13 @@ export function hasPlayedToday(): boolean {
 export function saveDailyResult(result: DailyResult): void {
   if (typeof document === "undefined") return;
 
-  const expires = new Date(Date.now() + COOKIE_EXPIRES).toUTCString();
+  const now = new Date();
+
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+  tomorrow.setHours(0, 0, 1, 0);
+
+  const expires = tomorrow.toUTCString();
   const cookieValue = encodeURIComponent(JSON.stringify(result));
   document.cookie = `${COOKIE_NAME}=${cookieValue}; expires=${expires}; path=/; SameSite=Strict`;
 }
