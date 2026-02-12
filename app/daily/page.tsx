@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { hasPlayedToday, saveDailyResult, getTodayResult } from "../lib/cookies";
+import { ShareButton } from "../components/ShareButton";
 
 type Scran = {
   id: number;
@@ -274,9 +275,11 @@ export default function DailyPage() {
             </div>
           </div>
 
+          <ShareButton userAnswers={storedResult.userAnswers} score={storedResult.score} />
+
           <Link
             href="/"
-            className="pixel-btn inline-block bg-yellow-400 border-4 border-black px-8 py-4 text-black text-lg hover:bg-yellow-300"
+            className="pixel-btn inline-block bg-yellow-400 border-4 border-black px-8 py-4 text-black text-lg hover:bg-yellow-300 mt-4"
           >
             На главную
           </Link>
@@ -375,9 +378,11 @@ export default function DailyPage() {
             )}
           </div>
 
+          <ShareButton userAnswers={userAnswers} score={userScore} />
+
           <Link
             href="/"
-            className="pixel-btn inline-block bg-yellow-400 border-4 border-black px-8 py-4 text-black text-lg hover:bg-yellow-300"
+            className="pixel-btn inline-block bg-yellow-400 border-4 border-black px-8 py-4 text-black text-lg hover:bg-yellow-300 mt-4"
           >
             На главную
           </Link>
