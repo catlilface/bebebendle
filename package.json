@@ -1,6 +1,6 @@
 {
   "name": "bebebendle",
-  "version": "0.1.1-1",
+  "version": "0.1.1-beta.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
