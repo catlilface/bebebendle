@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     const percentageB = getLikesPercentage(updatedScranB);
 
     // Determine which one has higher percentage
-    const correctScranId = percentageA > percentageB ? scranAId : scranBId;
+    const correctScranId = percentageA >= percentageB ? scranAId : scranBId;
     const isCorrect = chosenScranId === correctScranId;
 
     return NextResponse.json({

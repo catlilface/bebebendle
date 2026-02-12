@@ -3,7 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { hasPlayedToday, saveDailyResult, getTodayResult } from "../lib/cookies";
+import {
+  hasPlayedToday,
+  saveDailyResult,
+  getTodayResult,
+} from "../lib/cookies";
 import { ShareButton } from "../components/ShareButton";
 
 type Scran = {
@@ -53,7 +57,8 @@ export default function DailyPage() {
   const [averageScore, setAverageScore] = useState<number | null>(null);
   const [submittingScore, setSubmittingScore] = useState(false);
   const [alreadyPlayed, setAlreadyPlayed] = useState(false);
-  const [storedResult, setStoredResult] = useState<ReturnType<typeof getTodayResult>>(null);
+  const [storedResult, setStoredResult] =
+    useState<ReturnType<typeof getTodayResult>>(null);
 
   // Check if already played today
   useEffect(() => {
@@ -103,7 +108,7 @@ export default function DailyPage() {
     if (!dailyData || isVoting) return;
 
     const currentRoundData = dailyData.rounds.find(
-      (r) => r.roundNumber === currentRound
+      (r) => r.roundNumber === currentRound,
     );
     if (!currentRoundData) return;
 
@@ -135,19 +140,32 @@ export default function DailyPage() {
         setLastAnswer(answer);
         setShowResult(true);
 
+        // Prefetch next round images immediately after successful vote
+        if (currentRound < 10) {
+          const nextRoundData = dailyData.rounds.find(
+            (r) => r.roundNumber === currentRound + 1,
+          );
+          if (nextRoundData) {
+            const imgA = new window.Image();
+            const imgB = new window.Image();
+            imgA.src = nextRoundData.scranA.imageUrl;
+            imgB.src = nextRoundData.scranB.imageUrl;
+          }
+        }
+
         setTimeout(() => {
           setIsTransitioning(true);
-          
+
           setTimeout(() => {
             setShowResult(false);
             setLastAnswer(null);
-            
+
             if (currentRound < 10) {
               setCurrentRound((prev) => prev + 1);
               setIsTransitioning(false);
             } else {
               const correctCount = [...userAnswers, answer].filter(
-                (a) => a.isCorrect
+                (a) => a.isCorrect,
               ).length;
               setUserScore(correctCount);
               setGameComplete(true);
@@ -155,7 +173,7 @@ export default function DailyPage() {
             }
             setIsVoting(false);
           }, 2000);
-        }, 5000);
+        }, 1000);
       } else {
         setError("Не удалось обработать голос");
         setIsVoting(false);
@@ -181,7 +199,9 @@ export default function DailyPage() {
       });
 
       // Fetch average score
-      const avgResponse = await fetch(`/api/daily/results?date=${dailyData.date}`);
+      const avgResponse = await fetch(
+        `/api/daily/results?date=${dailyData.date}`,
+      );
       if (avgResponse.ok) {
         const avgData = await avgResponse.json();
         setAverageScore(avgData.averageScore);
@@ -192,14 +212,19 @@ export default function DailyPage() {
         date: dailyData.date,
         score,
         totalRounds: 10,
-        userAnswers: [...userAnswers, {
-          roundNumber: currentRound,
-          isCorrect: score > userScore, // This will be the last answer
-          chosenScranId: userAnswers[userAnswers.length - 1]?.chosenScranId || 0,
-          correctScranId: userAnswers[userAnswers.length - 1]?.correctScranId || 0,
-          percentageA: userAnswers[userAnswers.length - 1]?.percentageA || 0,
-          percentageB: userAnswers[userAnswers.length - 1]?.percentageB || 0,
-        }],
+        userAnswers: [
+          ...userAnswers,
+          {
+            roundNumber: currentRound,
+            isCorrect: score > userScore, // This will be the last answer
+            chosenScranId:
+              userAnswers[userAnswers.length - 1]?.chosenScranId || 0,
+            correctScranId:
+              userAnswers[userAnswers.length - 1]?.correctScranId || 0,
+            percentageA: userAnswers[userAnswers.length - 1]?.percentageA || 0,
+            percentageB: userAnswers[userAnswers.length - 1]?.percentageB || 0,
+          },
+        ],
       });
     } catch (error) {
       console.error("Error submitting score:", error);
@@ -224,7 +249,9 @@ export default function DailyPage() {
     return (
       <div className="retro-bg flex min-h-screen items-center justify-center">
         <div className="retro-overlay absolute inset-0" />
-        <div className="pixel-text relative z-10 text-2xl font-bold text-white">Загрузка...</div>
+        <div className="pixel-text relative z-10 text-2xl font-bold text-white">
+          Загрузка...
+        </div>
       </div>
     );
   }
@@ -243,7 +270,7 @@ export default function DailyPage() {
           <h1 className="pixel-text mb-4 text-4xl font-bold text-white sm:text-5xl">
             Вы уже играли сегодня!
           </h1>
-          
+
           <p className="pixel-text mb-8 text-xl text-white">
             Следующий дейлик будет доступен завтра
           </p>
@@ -268,14 +295,19 @@ export default function DailyPage() {
 
           <div className="mb-8 space-y-4">
             <div className="pixel-container rounded-2xl bg-zinc-900/80 p-6">
-              <p className="pixel-text mb-2 text-lg text-white">Ваш результат</p>
+              <p className="pixel-text mb-2 text-lg text-white">
+                Ваш результат
+              </p>
               <p className="pixel-text text-5xl font-black text-white sm:text-6xl">
                 {storedResult.score}/10
               </p>
             </div>
           </div>
 
-          <ShareButton userAnswers={storedResult.userAnswers} score={storedResult.score} />
+          <ShareButton
+            userAnswers={storedResult.userAnswers}
+            score={storedResult.score}
+          />
 
           <Link
             href="/"
@@ -310,7 +342,9 @@ export default function DailyPage() {
       <div className="retro-bg flex min-h-screen items-center justify-center">
         <div className="retro-overlay absolute inset-0" />
         <div className="relative z-10 text-center">
-          <p className="pixel-text mb-6 text-xl text-white">Нет доступных блюд</p>
+          <p className="pixel-text mb-6 text-xl text-white">
+            Нет доступных блюд
+          </p>
           <Link
             href="/"
             className="pixel-btn inline-block bg-yellow-400 border-4 border-black px-6 py-3 text-black text-lg hover:bg-yellow-300"
@@ -356,7 +390,9 @@ export default function DailyPage() {
 
           <div className="mb-8 space-y-4">
             <div className="pixel-container rounded-2xl bg-zinc-900/80 p-6">
-              <p className="pixel-text mb-2 text-lg text-white">Ваш результат</p>
+              <p className="pixel-text mb-2 text-lg text-white">
+                Ваш результат
+              </p>
               <p className="pixel-text text-5xl font-black text-white sm:text-6xl">
                 {userScore}/10
               </p>
@@ -392,14 +428,16 @@ export default function DailyPage() {
   }
 
   const currentRoundData = dailyData.rounds.find(
-    (r) => r.roundNumber === currentRound
+    (r) => r.roundNumber === currentRound,
   );
 
   if (!currentRoundData) {
     return (
       <div className="retro-bg flex min-h-screen items-center justify-center">
         <div className="retro-overlay absolute inset-0" />
-        <div className="pixel-text relative z-10 text-xl text-white">Раунд не найден</div>
+        <div className="pixel-text relative z-10 text-xl text-white">
+          Раунд не найден
+        </div>
       </div>
     );
   }
@@ -409,7 +447,7 @@ export default function DailyPage() {
   return (
     <div className="retro-bg relative h-screen w-full overflow-hidden">
       <div className="retro-overlay absolute inset-0" />
-      
+
       {/* Result Overlay */}
       <AnimatePresence>
         {showResult && lastAnswer && (
