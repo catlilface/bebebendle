@@ -12,6 +12,8 @@ services:
       - ./db:/app/db
       - ./public/uploads:/app/public/uploads
       - next-cache:/app/.next/cache
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
 
   bot:
@@ -24,6 +26,8 @@ services:
     volumes:
       - ./db:/app/db
       - ./public/uploads:/app/public/uploads
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     depends_on:
       - frontend
