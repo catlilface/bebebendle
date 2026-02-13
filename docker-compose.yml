@@ -13,6 +13,8 @@ services:
       - ./public/uploads:/app/public/uploads
       - next-cache:/app/.next/cache
     restart: unless-stopped
+    depends_on:
+      - db
 
   bot:
     build:
@@ -22,30 +24,26 @@ services:
     env_file:
       - .env
     volumes:
-      - ./db:/app/db
       - ./public/uploads:/app/public/uploads
     restart: unless-stopped
     depends_on:
       - frontend
+      - db
     network_mode: bridge
 
-  db-backup:
-    image: alpine:latest
-    container_name: bebebendle-db-backup
+  db:
+    image: postgres:15
+    container_name: bebebendle-postgres
+    environment:
+      POSTGRES_DB: bebendle
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     volumes:
-      - ./db:/data/db:ro
-      - ./backups:/backups
-    command: >
-      sh -c "
-        while true; do
-          sleep 86400 &&
-          cp /data/db/bebendle.sqlite /backups/bebendle-$$(date +%Y%m%d-%H%M%S).sqlite &&
-          find /backups -name '*.sqlite' -mtime +7 -delete
-        done
-      "
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     restart: unless-stopped
-    profiles:
-      - backup
 
 volumes:
   next-cache:
+  postgres_data:

@@ -1,57 +1,62 @@
-import { drizzle } from "drizzle-orm/libsql";
-import { createClient } from "@libsql/client";
-import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { drizzle } from "drizzle-orm/postgresql";
+import { Client } from "pg";
+import { pgTable, text, integer, real, boolean, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
-const client = createClient({
-  url: "file:./db/bebendle.sqlite",
+// Для локальной разработки используем переменные окружения или значения по умолчанию
+const client = new Client({
+  host: process.env.POSTGRES_HOST || "localhost",
+  port: parseInt(process.env.POSTGRES_PORT || "5432"),
+  database: process.env.POSTGRES_DB || "bebendle",
+  user: process.env.POSTGRES_USER || "postgres",
+  password: process.env.POSTGRES_PASSWORD || "postgres",
 });
 
 export const db = drizzle(client);
 
-export const scrans = sqliteTable("scrans", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const scrans = pgTable("scrans", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   imageUrl: text("image_url").notNull(),
   name: text("name").notNull(),
   description: text("description"),
   price: real("price").notNull(),
   numberOfLikes: integer("number_of_likes").notNull().default(0),
   numberOfDislikes: integer("number_of_dislikes").notNull().default(0),
-  approved: integer("approved", { mode: "boolean" }).notNull().default(false),
+  approved: boolean("approved").notNull().default(false),
 });
 
-export const dailyScrandles = sqliteTable("daily_scrandles", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const dailyScrandles = pgTable("daily_scrandles", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   date: text("date").notNull(),
   scranAId: integer("scran_a_id").notNull(),
   scranBId: integer("scran_b_id").notNull(),
   roundNumber: integer("round_number").notNull(),
-  createdAt: text("created_at").notNull(),
+  createdAt: timestamp("created_at").notNull(),
 }, (table) => ({
   uniqueRoundPerDay: uniqueIndex("unique_round_per_day").on(table.date, table.roundNumber),
 }));
 
-export const scrandleVotes = sqliteTable("scrandle_votes", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const scrandleVotes = pgTable("scrandle_votes", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   dailyScrandleId: integer("daily_scrandle_id").notNull(),
   sessionId: text("session_id").notNull(),
   chosenScranId: integer("chosen_scran_id").notNull(),
-  createdAt: text("created_at").notNull(),
+  createdAt: timestamp("created_at").notNull(),
 });
 
-export const dailyUserResults = sqliteTable("daily_user_results", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const dailyUserResults = pgTable("daily_user_results", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   date: text("date").notNull(),
   sessionId: text("session_id").notNull(),
   score: integer("score").notNull(),
-  createdAt: text("created_at").notNull(),
+  createdAt: timestamp("created_at").notNull(),
 });
 
-export const telegramVotes = sqliteTable("telegram_votes", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const telegramVotes = pgTable("telegram_votes", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   telegramId: text("telegram_id").notNull(),
   scranId: integer("scran_id").notNull(),
-  isLike: integer("is_like", { mode: "boolean" }).notNull(),
-  createdAt: text("created_at").notNull(),
+  isLike: boolean("is_like").notNull(),
+  createdAt: timestamp("created_at").notNull(),
 }, (table) => ({
   uniqueVote: uniqueIndex("unique_telegram_vote").on(table.telegramId, table.scranId),
 }));

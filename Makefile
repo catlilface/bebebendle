@@ -15,6 +15,7 @@ help:
 	@echo "  make new-daily    - Trigger new daily scrandles via API"
 	@echo "  make clean        - Remove all containers and volumes"
 	@echo "  make restart      - Restart all services"
+	@echo "  make migrate-data - Migrate data from SQLite to PostgreSQL"
 
 # Build all images
 build:
@@ -100,3 +101,7 @@ new-daily:
 new-daily-raw:
 	@curl -s -X GET http://localhost:3000/api/cron/daily \
 		-H "Authorization: Bearer $(shell echo $$CRON_SECRET)"
+
+# Migrate data from SQLite to PostgreSQL
+migrate-data:
+	docker compose exec frontend bun run scripts/migrate-data.ts
