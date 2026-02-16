@@ -55,10 +55,10 @@ dp = Dispatcher(storage=storage)
 router = Router()
 
 # Initialize database
-db = Database("./db/bebendle.sqlite")
+db = Database()
 
 # Upload configuration
-UPLOADS_DIR = Path("/app/public/uploads")
+UPLOADS_DIR = Path("/app/uploads")
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -490,6 +490,7 @@ async def process_confirmation(message: Message, state: FSMContext) -> None:
                     name=data["name"],
                     description=data.get("description"),
                     price=data["price"],
+                    telegram_id=data["telegram_id"],
                 )
 
             await message.answer(

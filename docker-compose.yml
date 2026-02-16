@@ -11,6 +11,7 @@ services:
     volumes:
       - ./next/public/uploads:/app/public/uploads
       - next-cache:/app/.next/cache
+      - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
     depends_on:
       db:
@@ -23,13 +24,19 @@ services:
     container_name: bebebendle-bot
     env_file:
       - .env
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=bebendle
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
     volumes:
-      - ./next/public/uploads:/app/public/uploads
+      - ./uploads:/app/uploads
+      - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
     depends_on:
       - next
       - db
-    network_mode: bridge
 
   db:
     image: postgres:15
@@ -40,6 +47,7 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - "5432:5432"
     restart: unless-stopped
