@@ -1,20 +1,20 @@
 services:
-  frontend:
+  next:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: bebebendle-frontend
+      context: ./next
+      dockerfile: Dockerfile
+    container_name: bebebendle-next
     ports:
       - "3000:3000"
     env_file:
       - .env
     volumes:
-      - ./db:/app/db
-      - ./public/uploads:/app/public/uploads
+      - ./next/public/uploads:/app/public/uploads
       - next-cache:/app/.next/cache
     restart: unless-stopped
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   bot:
     build:
@@ -24,10 +24,10 @@ services:
     env_file:
       - .env
     volumes:
-      - ./public/uploads:/app/public/uploads
+      - ./next/public/uploads:/app/public/uploads
     restart: unless-stopped
     depends_on:
-      - frontend
+      - next
       - db
     network_mode: bridge
 
@@ -43,7 +43,13 @@ services:
     ports:
       - "5432:5432"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   next-cache:
   postgres_data:
+  pgadmin_data:
