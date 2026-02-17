@@ -1,92 +1,167 @@
 # AGENTS.md
 
-This file provides guidelines for agentic coding agents working in the bebebendle repository.
+Guidelines for agentic coding agents working in the bebebendle repository.
+
+## Project Overview
+
+**Monorepo:** Next.js frontend + Python Telegram bot + PostgreSQL (Docker)
+
+**Services:**
+- `next/` - Next.js 16 + React 19 + TypeScript
+- `bot/` - Python 3.11 + aiogram
+- `db/` - PostgreSQL 15 (Docker container)
 
 ## Build, Lint, and Test Commands
 
-**Package Manager:** Bun (use `bun` not `npm`)
+### Frontend (Next.js)
+**Package Manager:** Bun
 
-### Available Scripts
 ```bash
-# Development
-bun run dev          # Start Next.js dev server on http://localhost:3000
+# Development (in next/ directory)
+bun run dev              # Start dev server
 
-# Build
-bun run build        # Build production Next.js app
-bun run start        # Start production server (after build)
+# Build & Deploy
+bun run build            # Build production
+make up-build           # Docker: build & start all services
 
 # Linting
-bun run lint         # Run ESLint on the entire codebase
-bun run lint --fix   # Auto-fix ESLint issues
+bun run lint            # Run ESLint
+bun run lint --fix      # Auto-fix ESLint
 ```
 
-### Testing
-**No test framework is currently configured.** If adding tests, consider:
-- Vitest for unit testing (recommended for Vite/Next.js projects)
-- Playwright for E2E testing
+### Python Bot
+**Package Manager:** UV
+
+```bash
+# Development (in bot/ directory)
+uv sync                 # Install dependencies
+uv run python src/main.py  # Run bot locally
+
+# Linting & Type Checking
+ruff check .            # Run Ruff linter
+ruff check --fix .      # Auto-fix issues
+mypy src/               # Run MyPy type checker
+
+# Testing
+pytest                  # Run all tests
+pytest -xvs             # Verbose output
+pytest -xvs test_file.py::test_func  # Single test
+```
+
+### Database & Docker
+
+```bash
+# Database
+make migrate            # Run Drizzle migrations
+make generate-migration # Generate new migration
+
+# Docker Operations
+make up                 # Start all services
+make down               # Stop all services
+make logs-frontend      # View frontend logs
+make logs-bot           # View bot logs
+make shell-frontend     # Open shell in frontend container
+```
 
 ## Code Style Guidelines
 
-### TypeScript
-- **Target:** ES2017
-- **Strict mode:** Enabled - all strict TypeScript options must be followed
-- **Module:** ESNext with bundler resolution
-- **JSX:** react-jsx transform (no need to import React)
+### TypeScript (Frontend)
 
-### Imports and Path Aliases
-- Use `@/*` alias for absolute imports from project root
-- Example: `import { db } from "@/db/schema"`
-- Prefer named imports over default imports where possible
+**Configuration:**
+- Target: ES2017, Strict mode
+- Module: ESNext with bundler resolution
+- JSX: react-jsx (no React import needed)
 
-### File and Naming Conventions
-- **React Components:** PascalCase (e.g., `UserProfile.tsx`)
-- **Utility files:** camelCase (e.g., `formatDate.ts`)
-- **Directories:** kebab-case (e.g., `user-profile/`)
-- **Config files:** kebab-case with appropriate extension (e.g., `eslint.config.mjs`)
+**Imports:**
+- Use `@/*` alias: `import { db } from "@/db/schema"`
+- Prefer named imports
 
-### React Conventions
-- Use functional components with explicit return types
-- Use `Readonly<>` for props to enforce immutability
-- Prefer early returns over nested conditionals
-- Use Server Components by default; add `"use client"` only when needed
+**Naming Conventions:**
+- Components: PascalCase (`UserProfile.tsx`)
+- Utilities: camelCase (`formatDate.ts`)
+- Directories: kebab-case (`user-profile/`)
+- Configs: kebab-case (`eslint.config.mjs`)
+
+**React Patterns:**
+- Functional components with explicit return types
+- Use `Readonly<>` for props: `type Props = Readonly<{ name: string }>`
+- Prefer early returns
+- Server Components by default; add `"use client"` only when needed
+
+**Error Handling:**
+- Strict null checks
+- Try/catch for async operations
+- Avoid `any`; use `unknown` with type guards
+
+### Python (Bot)
+
+**Configuration:**
+- Python 3.11+, MyPy strict typing
+- Ruff linting (line-length: 100)
+
+**Naming Conventions:**
+- Functions/variables: snake_case
+- Classes: PascalCase
+- Constants: UPPER_SNAKE_CASE
+
+**Type Hints:**
+- All functions must have type hints
+- Use `from __future__ import annotations` for forward references
 
 ### Styling (Tailwind CSS v4)
-- Use Tailwind CSS v4 syntax in `globals.css`:
-  ```css
-  @import "tailwindcss";
-  @theme inline { ... }
-  ```
-- Prefer Tailwind utility classes over inline styles
-- Use CSS variables for theming (already configured for light/dark mode)
 
-### Error Handling
-- Use TypeScript's strict null checks
-- Prefer explicit error handling with try/catch for async operations
-- Avoid using `any` type - use `unknown` with type guards instead
+- Use CSS syntax: `@import "tailwindcss"; @theme inline { ... }`
+- Prefer Tailwind utility classes over inline styles
+- CSS variables for theming
 
 ### Database (Drizzle ORM)
-- Define schemas in `db/schema.ts`
-- Use Drizzle Kit for migrations: `bunx drizzle-kit generate`
-- Prefer type-safe queries using Drizzle ORM over raw SQL
 
-### ESLint
-- Uses ESLint 9 flat config format
+- Define schemas in `next/db/schema.ts`
+- Prefer type-safe Drizzle queries
+- Use migrations via `bunx drizzle-kit generate`
+
+### ESLint & Formatting
+
+- **No Prettier** - rely on ESLint
+- ESLint 9 flat config
 - Extends Next.js core-web-vitals and TypeScript rules
 - Run `bun run lint` before committing
+
+## Testing
+
+**Frontend:** No test framework configured
+
+**Backend:** pytest configured:
+```bash
+pytest                  # Run all tests
+pytest -xvs             # Verbose mode
+pytest -k test_name     # Run tests matching pattern
+```
 
 ## Project Structure
 
 ```
-app/           # Next.js App Router pages and layouts
-db/            # Drizzle ORM schema and database files
-public/        # Static assets
-backend/       # Backend API code (currently empty)
+next/                   # Next.js frontend
+├── app/               # App Router pages
+│   ├── admin/        # Admin panel
+│   ├── api/          # API routes
+│   ├── components/   # React components
+│   └── lib/          # Utility functions
+├── db/               # Drizzle schema & migrations
+├── public/           # Static assets
+└── scripts/          # Utility scripts
+
+bot/                   # Python Telegram bot
+├── src/              # Source code
+│   ├── main.py       # Bot handlers
+│   └── database.py   # Database operations
+└── pyproject.toml    # Dependencies & config
 ```
 
 ## Important Notes
 
-- This project uses **Next.js 16** with **React 19**
-- **No Prettier** is configured - rely on ESLint for formatting
-- SQLite database at `db/bebendle.sqlite`
-- Dark mode is supported via `prefers-color-scheme`
-- Geist font is used for both sans and mono typography
+- Next.js 16 with React 19
+- PostgreSQL via Docker (was SQLite)
+- Dark mode via `prefers-color-scheme`
+- Geist font for typography
+- Bun for frontend, UV for Python

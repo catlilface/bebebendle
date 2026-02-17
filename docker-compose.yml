@@ -1,20 +1,22 @@
 services:
-  frontend:
+  next:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: bebebendle-frontend
+      context: ./next
+      dockerfile: Dockerfile
+    container_name: bebebendle-next
     ports:
       - "3000:3000"
     env_file:
       - .env
     volumes:
-      - ./db:/app/db
-      - ./public/uploads:/app/public/uploads
+      - ./next/public/uploads:/app/public/uploads
       - next-cache:/app/.next/cache
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
 
   bot:
     build:
@@ -24,32 +26,32 @@ services:
     env_file:
       - .env
     volumes:
-      - ./db:/app/db
-      - ./public/uploads:/app/public/uploads
+      - ./next/public/uploads:/app/uploads
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     depends_on:
-      - frontend
-    network_mode: bridge
+      - next
+      - db
 
-  db-backup:
-    image: alpine:latest
-    container_name: bebebendle-db-backup
+  db:
+    image: postgres:15
+    container_name: bebebendle-postgres
+    env_file:
+      - .env
     volumes:
-      - ./db:/data/db:ro
-      - ./backups:/backups
-    command: >
-      sh -c "
-        while true; do
-          sleep 86400 &&
-          cp /data/db/bebendle.sqlite /backups/bebendle-$$(date +%Y%m%d-%H%M%S).sqlite &&
-          find /backups -name '*.sqlite' -mtime +7 -delete
-        done
-      "
+      - postgres_data:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "5432:5432"
     restart: unless-stopped
-    profiles:
-      - backup
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   next-cache:
+  postgres_data:
+  pgadmin_data:
