@@ -12,6 +12,7 @@ services:
       - ./next/public/uploads:/app/public/uploads
       - next-cache:/app/.next/cache
       - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     depends_on:
       db:
@@ -27,6 +28,7 @@ services:
     volumes:
       - ./next/public/uploads:/app/uploads
       - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     depends_on:
       - next

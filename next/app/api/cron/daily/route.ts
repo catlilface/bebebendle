@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       .where(
         and(
           eq(scrans.approved, true),
-          sql`${scrans.numberOfLikes} + ${scrans.numberOfDislikes} > 2`
+          sql`${scrans.numberOfLikes} + ${scrans.numberOfDislikes} > 3`
         )
       );
 
@@ -71,6 +71,7 @@ export async function GET(request: Request) {
         scranB: scranB.name,
       });
     }
+    console.log("Added daily gamee")
 
     return NextResponse.json({
       message: "Daily scrandles created successfully",
