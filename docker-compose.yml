@@ -24,12 +24,6 @@ services:
     container_name: bebebendle-bot
     env_file:
       - .env
-    environment:
-      - POSTGRES_HOST=db
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=bebendle
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
     volumes:
       - ./next/public/uploads:/app/uploads
       - /etc/localtime:/etc/localtime:ro
@@ -41,10 +35,8 @@ services:
   db:
     image: postgres:15
     container_name: bebebendle-postgres
-    environment:
-      POSTGRES_DB: bebendle
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+    env_file:
+      - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
