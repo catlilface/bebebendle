@@ -12,7 +12,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
         duration: 0.3,
         ease: "easeInOut",
       }}
-      className="min-h-dvh fixed inset-0"
+      className="min-h-dvh inset-0"
     >
       {children}
     </motion.div>

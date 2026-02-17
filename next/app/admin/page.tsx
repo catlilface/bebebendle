@@ -4,7 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Scran } from "../../db/schema";
 
-type SortField = "id" | "name" | "price" | "numberOfLikes" | "numberOfDislikes" | "approved";
+type SortField =
+  | "id"
+  | "name"
+  | "price"
+  | "numberOfLikes"
+  | "numberOfDislikes"
+  | "approved";
 type SortOrder = "asc" | "desc";
 
 export default function AdminPage() {
@@ -29,7 +35,7 @@ export default function AdminPage() {
           headers: {
             Authorization: `Bearer ${adminPassword}`,
           },
-        }
+        },
       );
       if (response.ok) {
         const data = await response.json();
@@ -154,9 +160,7 @@ export default function AdminPage() {
                 placeholder="Enter admin password"
               />
             </div>
-            {error && (
-              <p className="text-sm font-bold text-red-600">{error}</p>
-            )}
+            {error && <p className="text-sm font-bold text-red-600">{error}</p>}
             <button
               type="submit"
               className="pixel-btn w-full bg-yellow-400 px-4 py-2 text-lg font-bold text-black hover:bg-yellow-300"
@@ -192,9 +196,7 @@ export default function AdminPage() {
 
         {loading ? (
           <div className="pixel-container flex h-64 items-center justify-center rounded-none bg-zinc-900/80">
-            <div className="pixel-text text-lg text-white">
-              Loading...
-            </div>
+            <div className="pixel-text text-lg text-white">Loading...</div>
           </div>
         ) : (
           <>
@@ -251,10 +253,7 @@ export default function AdminPage() {
                 </thead>
                 <tbody className="divide-y divide-zinc-700">
                   {scrans.map((scran) => (
-                    <tr
-                      key={scran.id}
-                      className="hover:bg-zinc-800/50"
-                    >
+                    <tr key={scran.id} className="hover:bg-zinc-800/50">
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-white">
                         {scran.id}
                       </td>
@@ -341,7 +340,7 @@ export default function AdminPage() {
                 <div className="pixel-text text-sm text-white">
                   Page {currentPage} of {totalPages}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
@@ -362,7 +361,7 @@ export default function AdminPage() {
                       >
                         {page}
                       </button>
-                    )
+                    ),
                   )}
                   <button
                     onClick={() =>
