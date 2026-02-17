@@ -247,7 +247,7 @@ export default function DailyPage() {
 
   if (loading) {
     return (
-      <div className="retro-bg flex min-h-screen items-center justify-center">
+      <div className="retro-bg flex min-h-dvh items-center justify-center">
         <div className="retro-overlay absolute inset-0" />
         <div className="pixel-text relative z-10 text-2xl font-bold text-white">
           Загрузка...
@@ -259,7 +259,7 @@ export default function DailyPage() {
   // Show already played screen
   if (alreadyPlayed && storedResult) {
     return (
-      <div className="retro-bg flex min-h-screen flex-col items-center justify-center px-4">
+      <div className="retro-bg flex min-h-dvh flex-col items-center justify-center px-4">
         <div className="retro-overlay absolute inset-0" />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -322,7 +322,7 @@ export default function DailyPage() {
 
   if (error) {
     return (
-      <div className="retro-bg flex min-h-screen items-center justify-center">
+      <div className="retro-bg flex min-h-dvh items-center justify-center">
         <div className="retro-overlay absolute inset-0" />
         <div className="relative z-10 text-center">
           <p className="pixel-text mb-6 text-xl text-white">{error}</p>
@@ -339,7 +339,7 @@ export default function DailyPage() {
 
   if (!dailyData) {
     return (
-      <div className="retro-bg flex min-h-screen items-center justify-center">
+      <div className="retro-bg flex min-h-dvh items-center justify-center">
         <div className="retro-overlay absolute inset-0" />
         <div className="relative z-10 text-center">
           <p className="pixel-text mb-6 text-xl text-white">
@@ -358,7 +358,7 @@ export default function DailyPage() {
 
   if (gameComplete) {
     return (
-      <div className="retro-bg flex min-h-screen flex-col items-center justify-center px-4">
+      <div className="retro-bg flex min-h-dvh flex-col items-center justify-center px-4">
         <div className="retro-overlay absolute inset-0" />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -433,7 +433,7 @@ export default function DailyPage() {
 
   if (!currentRoundData) {
     return (
-      <div className="retro-bg flex min-h-screen items-center justify-center">
+      <div className="retro-bg flex min-h-dvh items-center justify-center">
         <div className="retro-overlay absolute inset-0" />
         <div className="pixel-text relative z-10 text-xl text-white">
           Раунд не найден
@@ -445,7 +445,7 @@ export default function DailyPage() {
   const { scranA, scranB } = currentRoundData;
 
   return (
-    <div className="retro-bg relative h-screen w-full overflow-hidden">
+    <div className="retro-bg relative h-dvh w-full overflow-hidden">
       <div className="retro-overlay absolute inset-0" />
 
       {/* Result Overlay */}

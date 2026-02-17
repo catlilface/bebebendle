@@ -135,7 +135,7 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="retro-bg flex min-h-screen items-center justify-center">
+      <div className="retro-bg flex min-h-dvh items-center justify-center">
         <div className="retro-overlay absolute inset-0" />
         <div className="pixel-container relative z-10 w-full max-w-md rounded-none border-4 border-black bg-white p-8">
           <h1 className="pixel-text mb-6 text-2xl font-bold text-black">
@@ -170,7 +170,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="retro-bg min-h-screen">
+    <div className="retro-bg min-h-dvh">
       <div className="retro-overlay absolute inset-0" />
       <div className="relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8 flex items-center justify-between">

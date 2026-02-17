@@ -7,7 +7,7 @@ import { DailyPlayButton } from "./components/DailyPlayButton";
 export default function Home() {
   return (
     <div
-      className="flex min-h-screen items-start justify-center font-sans overflow-x-hidden"
+      className="flex min-h-dvh items-start justify-center font-sans overflow-x-hidden"
       style={{
         backgroundImage: "url('/background.jpg')",
         backgroundSize: "cover",

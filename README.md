@@ -1,4 +1,4 @@
-![alt text](./public/бебендл.webp)
+![alt text](./next/public/бебендл.webp)
 
 # Bebebendle
 
