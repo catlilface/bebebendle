@@ -19,8 +19,12 @@ function getServerSnapshot() {
 }
 
 export function DailyPlayButton() {
-  const hasPlayed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  
+  const hasPlayed = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
+
   // Get score only if played
   let score: number | null = null;
   if (hasPlayed && typeof window !== "undefined") {
@@ -35,18 +39,15 @@ export function DailyPlayButton() {
       <div className="mt-4 sm:mt-6 2xl:mt-8">
         <button
           disabled
-          className="pixel-btn inline-block bg-gray-500 border-4 border-black px-6 sm:px-8 py-3 sm:py-4 text-black text-base sm:text-lg md:text-xl 2xl:text-2xl 4xl:text-3xl cursor-not-allowed opacity-70 2xl:px-12 2xl:py-6 4xl:px-16 4xl:py-8"
+          className="block text-center py-3 sm:py-4 text-gray-600 text-xl sm:text-2xl md:text-[2vw] mt-4 sm:mt-6 2xl:mt-8 2xl:px-12 2xl:py-6 4xl:px-16 4xl:py-8 uppercase w-full"
         >
-          Уже сыграно ✓
+          Уже сыграно
         </button>
         {score !== null && (
-          <p className="pixel-text mt-2 text-lg text-white">
+          <p className="mt-2 text-xl sm:text-2xl md:text-[2vw] text-white lg:text-black text-center">
             Ваш результат: {score}/10
           </p>
         )}
-        <p className="pixel-text mt-1 text-sm text-zinc-300">
-          Следующий дейлик завтра
-        </p>
       </div>
     );
   }
@@ -54,9 +55,9 @@ export function DailyPlayButton() {
   return (
     <Link
       href="/daily"
-      className="pixel-btn inline-block bg-yellow-400 border-4 border-black px-6 sm:px-8 py-3 sm:py-4 text-black text-base sm:text-lg md:text-xl 2xl:text-2xl 4xl:text-3xl hover:bg-yellow-300 mt-4 sm:mt-6 2xl:mt-8 2xl:px-12 2xl:py-6 4xl:px-16 4xl:py-8"
+      className="block text-center py-3 sm:py-4 lg:text-black hover:text-gray-600 text-xl sm:text-2xl md:text-[2vw] mt-4 sm:mt-6 2xl:mt-8 2xl:px-12 2xl:py-6 4xl:px-16 4xl:py-8 uppercase"
     >
-      Дейлик!
+      Дейлик
     </Link>
   );
 }

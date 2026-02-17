@@ -56,8 +56,7 @@ body {
 }
 
 .pixel-btn {
-    font-family: var(--font-pixel), monospace;
-    image-rendering: pixelated;
+    font-family: "Gill Sans MT", "Gill Sans", sans-serif;
     box-shadow:
         0 4px 0 #000,
         4px 4px 0 #000,
@@ -74,8 +73,7 @@ body {
 }
 
 .pixel-text {
-    font-family: var(--font-pixel), monospace;
-    image-rendering: pixelated;
+    font-family: "Gill Sans MT", "Gill Sans", sans-serif;
     text-shadow:
         -2px -2px 0 #000,
         2px -2px 0 #000,
