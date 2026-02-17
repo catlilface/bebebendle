@@ -14,7 +14,7 @@ Scrandle по еде зрителей стримера Olesha. Каждый де
 
 ```bash
 # Скопировать и настроить переменные окружения
-cp .env.example .env
+cp .env.sample .env
 # Отредактировать .env (BOT_TOKEN, ADMIN_PASSWORD, CRON_SECRET)
 
 # Собрать и запустить

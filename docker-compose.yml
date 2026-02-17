@@ -31,7 +31,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     volumes:
-      - ./uploads:/app/uploads
+      - ./next/public/uploads:/app/uploads
       - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
     depends_on:
