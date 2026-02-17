@@ -113,7 +113,7 @@ body {
 }
 
 .retro-bg {
-    background-image: url('/background.jpg');
+    background-image: url('/background.webp');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

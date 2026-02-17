@@ -6,7 +6,7 @@ import { DailyPlayButton } from "./components/DailyPlayButton";
 export default function Home() {
   return (
     <div
-      className="flex min-h-dvh items-start justify-center font-sans overflow-x-hidden lg:bg-[url(/background.jpg)]"
+      className="flex min-h-dvh items-start justify-center font-sans overflow-x-hidden lg:bg-[url(/background.webp)]"
       style={{
         backgroundSize: "cover",
         backgroundPosition: "center",
