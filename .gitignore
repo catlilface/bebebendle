@@ -44,5 +44,5 @@ next-env.d.ts
 *.sqlite
 
 # uploads
-/public/uploads/*
-!/public/uploads/.gitkeep
+next/public/uploads/*
+!next/public/uploads/.gitkeep
