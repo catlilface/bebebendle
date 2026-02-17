@@ -172,7 +172,7 @@ async def cmd_help(message: Message) -> None:
 
 
 @router.message(Command("vote"))
-async def cmd_vote(message: Message) -> None:
+async def cmd_vote(message: Message, user_id: str | None = None) -> None:
     """Handle /vote command - start voting for a single scran."""
     try:
         if not message.from_user:
@@ -180,6 +180,9 @@ async def cmd_vote(message: Message) -> None:
             return
 
         telegram_id = str(message.from_user.id)
+
+        if user_id:
+            telegram_id = user_id
 
         async with database_session() as database:
             # Get scrans user has already voted for
@@ -293,7 +296,7 @@ async def process_vote(callback: CallbackQuery) -> None:
         await callback.answer()
 
         # Show next scran after successful vote
-        await cmd_vote(callback.message)
+        await cmd_vote(callback.message, telegram_id)
 
     except Exception as e:
         logger.error(f"Error processing vote: {e}")
