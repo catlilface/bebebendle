@@ -31,11 +31,19 @@ export function saveDailyResult(result: DailyResult): void {
 
   const now = new Date();
 
-  const tomorrow = new Date(now);
-  tomorrow.setDate(now.getDate() + 1);
-  tomorrow.setHours(0, 0, 1, 0);
+  // Cookie expires at 00:00 UTC (start of next day)
+  const tomorrowUTC = new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1,
+      0,
+      0,
+      0,
+    ),
+  );
 
-  const expires = tomorrow.toUTCString();
+  const expires = tomorrowUTC.toUTCString();
   const cookieValue = encodeURIComponent(JSON.stringify(result));
   document.cookie = `${COOKIE_NAME}=${cookieValue}; expires=${expires}; path=/; SameSite=Strict`;
 }
