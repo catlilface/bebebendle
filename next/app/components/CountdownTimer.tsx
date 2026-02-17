@@ -4,11 +4,11 @@ import { useState, useEffect } from "react";
 
 function calculateTimeLeft() {
   const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
   
-  const diff = tomorrow.getTime() - now.getTime();
+  // Calculate time until 00:00 UTC (midnight UTC)
+  const tomorrowUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
+  
+  const diff = tomorrowUTC.getTime() - now.getTime();
   
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
