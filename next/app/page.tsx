@@ -51,7 +51,7 @@ export default function Home() {
           <span className="sm:hidden">twitch</span>
         </a>
         <a
-          href="https://github.com/catlilface"
+          href="https://github.com/catlilface/bebebendle"
           target="_blank"
           rel="noopener noreferrer"
           className="pixel-btn inline-flex items-center gap-1.5 sm:gap-2 2xl:gap-3 4xl:gap-4 bg-gray-700 border-2 sm:border-4 border-black px-2 sm:px-4 py-1.5 sm:py-2 2xl:px-6 2xl:py-3 4xl:px-8 4xl:py-4 text-white text-xs sm:text-sm md:text-base 2xl:text-xl 4xl:text-2xl hover:bg-gray-600 w-fit"
