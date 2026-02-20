@@ -9,7 +9,7 @@ help:
 	@echo "  make up           - Start all services"
 	@echo "  make down         - Stop all services"
 	@echo "  make logs         - View logs from all services"
-	@echo "  make shell        - Open shell in frontend container"
+	@echo "  make shell        - Open shell in next container"
 	@echo "  make migrate      - Run database migrations"
 	@echo "  make migrate-images - Migrate external images to local storage"
 	@echo "  make new-daily    - Trigger new daily scrandles via API"
@@ -41,17 +41,17 @@ down-volumes:
 logs:
 	docker compose logs -f
 
-# Frontend logs
-logs-frontend:
-	docker compose logs -f frontend
+# next logs
+logs-next:
+	docker compose logs -f next
 
 # Bot logs
 logs-bot:
 	docker compose logs -f bot
 
-# Open shell in frontend
-shell-frontend:
-	docker compose exec frontend sh
+# Open shell in next
+shell-next:
+	docker compose exec next sh
 
 # Open shell in bot
 shell-bot:
@@ -59,16 +59,16 @@ shell-bot:
 
 # Run database migrations
 migrate:
-	docker compose exec frontend bunx drizzle-kit migrate
-	docker compose exec frontend bunx drizzle-kit push
+	docker compose exec next bunx drizzle-kit migrate
+	docker compose exec next bunx drizzle-kit push
 
 # Migrate external images to local storage
 migrate-images:
-	docker compose exec frontend bun run scripts/migrate-images.ts
+	docker compose exec next bun run scripts/migrate-images.ts
 
 # Generate migration
 generate-migration:
-	docker compose exec frontend bunx drizzle-kit generate
+	docker compose exec next bunx drizzle-kit generate
 
 # Restart services
 restart:
@@ -104,4 +104,4 @@ new-daily-raw:
 
 # Migrate data from SQLite to PostgreSQL
 migrate-data:
-	docker compose exec frontend bun run scripts/migrate-data.ts
+	docker compose exec next bun run scripts/migrate-data.ts

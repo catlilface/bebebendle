@@ -8,6 +8,8 @@ import {
   saveDailyResult,
   getTodayResult,
 } from "../lib/cookies";
+import { getFingerprint } from "../lib/fingerprint";
+import { submitDailyVote, submitDailyResult, getDailyAverage } from "../actions/daily";
 import { ShareButton } from "../components/ShareButton";
 
 type Scran = {
@@ -62,6 +64,8 @@ export default function DailyPage() {
 
   // Check if already played today
   useEffect(() => {
+    getFingerprint();
+    
     const played = hasPlayedToday();
     if (played) {
       const result = getTodayResult();
@@ -72,7 +76,6 @@ export default function DailyPage() {
   }, []);
 
   const fetchDaily = useCallback(async () => {
-    // Skip if already played
     if (hasPlayedToday()) {
       return;
     }
@@ -114,26 +117,29 @@ export default function DailyPage() {
 
     try {
       setIsVoting(true);
-      const response = await fetch("/api/daily/vote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roundNumber: currentRound,
-          chosenScranId,
-          scranAId: currentRoundData.scranA.id,
-          scranBId: currentRoundData.scranB.id,
-        }),
-      });
+      const fingerprint = await getFingerprint();
+      const result = await submitDailyVote(
+        currentRound,
+        chosenScranId,
+        currentRoundData.scranA.id,
+        currentRoundData.scranB.id,
+        fingerprint
+      );
 
-      if (response.ok) {
-        const data = await response.json();
+      if ("error" in result) {
+        setError(result.error || "Unknown error");
+        setIsVoting(false);
+        return;
+      }
+
+      if (result.success) {
         const answer: UserAnswer = {
           roundNumber: currentRound,
-          isCorrect: data.isCorrect,
-          chosenScranId: data.chosenScranId,
-          correctScranId: data.correctScranId,
-          percentageA: data.percentageA,
-          percentageB: data.percentageB,
+          isCorrect: result.isCorrect,
+          chosenScranId: result.chosenScranId,
+          correctScranId: result.correctScranId,
+          percentageA: result.percentageA,
+          percentageB: result.percentageB,
         };
 
         setUserAnswers((prev) => [...prev, answer]);
@@ -189,21 +195,11 @@ export default function DailyPage() {
 
     try {
       setSubmittingScore(true);
-      await fetch("/api/daily/results", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          date: dailyData.date,
-          score,
-        }),
-      });
+      const fingerprint = await getFingerprint();
+      await submitDailyResult(dailyData.date, score, fingerprint);
 
-      // Fetch average score
-      const avgResponse = await fetch(
-        `/api/daily/results?date=${dailyData.date}`,
-      );
-      if (avgResponse.ok) {
-        const avgData = await avgResponse.json();
+      const avgData = await getDailyAverage(dailyData.date);
+      if (avgData.averageScore !== null) {
         setAverageScore(avgData.averageScore);
       }
 

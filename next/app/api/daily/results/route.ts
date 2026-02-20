@@ -2,12 +2,26 @@ import { NextResponse } from "next/server";
 import { db, dailyUserResults } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { cookies } from "next/headers";
+import { checkRateLimit, getClientIp } from "../../middleware/rateLimit";
 
-// POST: Submit user's score
 export async function POST(request: Request) {
   try {
+    const rateLimitResult = await checkRateLimit(
+      `daily-result:${getClientIp(request)}`,
+      1,
+      10
+    );
+
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait." },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { date, score } = body;
+    const fingerprint = request.headers.get("X-Client-Fingerprint") || null;
 
     if (!date || typeof score !== "number" || score < 0 || score > 10) {
       return NextResponse.json(
@@ -16,10 +30,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get or create session ID
     const cookieStore = await cookies();
     let sessionId = cookieStore.get("scrandle_session")?.value;
-    
+
     if (!sessionId) {
       sessionId = crypto.randomUUID();
       cookieStore.set("scrandle_session", sessionId, {
@@ -30,7 +43,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // Check if already submitted for this date
     const existing = await db
       .select()
       .from(dailyUserResults)
@@ -49,10 +61,10 @@ export async function POST(request: Request) {
       });
     }
 
-    // Insert new result
     await db.insert(dailyUserResults).values({
       date,
       sessionId,
+      fingerprintHash: fingerprint,
       score,
       createdAt: new Date(),
     });
@@ -62,6 +74,12 @@ export async function POST(request: Request) {
       score,
     });
   } catch (error) {
+    if ((error as { code?: string }).code === "23505") {
+      return NextResponse.json(
+        { error: "You have already played today" },
+        { status: 409 }
+      );
+    }
     console.error("Error submitting score:", error);
     return NextResponse.json(
       { error: "Failed to submit score" },
@@ -70,13 +88,12 @@ export async function POST(request: Request) {
   }
 }
 
-// GET: Get average score for today
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const date = searchParams.get("date") || new Date().toISOString().split("T")[0];
+    const date =
+      searchParams.get("date") || new Date().toISOString().split("T")[0];
 
-    // Get all results for today
     const results = await db
       .select({
         score: dailyUserResults.score,
@@ -92,7 +109,6 @@ export async function GET(request: Request) {
       });
     }
 
-    // Calculate average
     const totalScore = results.reduce((sum, r) => sum + r.score, 0);
     const averageScore = Math.round((totalScore / results.length) * 10) / 10;
 
