@@ -6,9 +6,20 @@ const FINGERPRINT_COOKIE = "bebendle_fp";
 async function generateFingerprintHash(components: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(components);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+
+  if (typeof crypto !== "undefined" && crypto.subtle) {
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  let hash = 0;
+  for (let i = 0; i < components.length; i++) {
+    const char = components.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(16);
 }
 
 function getCanvasFingerprint(): Promise<string> {
@@ -42,35 +53,39 @@ function getCanvasFingerprint(): Promise<string> {
 }
 
 export async function getFingerprint(): Promise<string> {
-  if (typeof window === "undefined") return "";
+  if (typeof window === "undefined" || typeof crypto === "undefined") return "";
 
   const stored = localStorage.getItem(FINGERPRINT_KEY);
   if (stored) return stored;
 
-  const components = [
-    navigator.userAgent,
-    navigator.language,
-    screen.width.toString(),
-    screen.height.toString(),
-    screen.colorDepth.toString(),
-    Intl.DateTimeFormat().resolvedOptions().timeZone,
-    new Date().getTimezoneOffset().toString(),
-    navigator.hardwareConcurrency?.toString() || "",
-    (navigator as { deviceMemory?: number }).deviceMemory?.toString() || "",
-  ];
+  try {
+    const components = [
+      navigator.userAgent,
+      navigator.language,
+      screen.width.toString(),
+      screen.height.toString(),
+      screen.colorDepth.toString(),
+      Intl.DateTimeFormat().resolvedOptions().timeZone,
+      new Date().getTimezoneOffset().toString(),
+      navigator.hardwareConcurrency?.toString() || "",
+      (navigator as { deviceMemory?: number }).deviceMemory?.toString() || "",
+    ];
 
-  const canvasFp = await getCanvasFingerprint();
-  components.push(canvasFp);
+    const canvasFp = await getCanvasFingerprint();
+    components.push(canvasFp);
 
-  const fingerprint = await generateFingerprintHash(components.join("|"));
+    const fingerprint = await generateFingerprintHash(components.join("|"));
 
-  localStorage.setItem(FINGERPRINT_KEY, fingerprint);
+    localStorage.setItem(FINGERPRINT_KEY, fingerprint);
 
-  const expires = new Date();
-  expires.setFullYear(expires.getFullYear() + 1);
-  document.cookie = `${FINGERPRINT_COOKIE}=${fingerprint}; expires=${expires.toUTCString()}; path=/; SameSite=Strict`;
+    const expires = new Date();
+    expires.setFullYear(expires.getFullYear() + 1);
+    document.cookie = `${FINGERPRINT_COOKIE}=${fingerprint}; expires=${expires.toUTCString()}; path=/; SameSite=Strict`;
 
-  return fingerprint;
+    return fingerprint;
+  } catch {
+    return "";
+  }
 }
 
 export function getFingerprintFromCookie(): string {
