@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { db, scrans } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { checkRateLimit, getClientIp } from "../../middleware/rateLimit";
 
-function getLikesPercentage(scran: { numberOfLikes: number; numberOfDislikes: number }): number {
+function getLikesPercentage(scran: {
+  numberOfLikes: number;
+  numberOfDislikes: number;
+}): number {
   const total = scran.numberOfLikes + scran.numberOfDislikes;
   if (total === 0) return 50;
   return Math.round((scran.numberOfLikes / total) * 100);
@@ -10,6 +14,19 @@ function getLikesPercentage(scran: { numberOfLikes: number; numberOfDislikes: nu
 
 export async function POST(request: Request) {
   try {
+    const rateLimitResult = await checkRateLimit(
+      `daily-vote:${getClientIp(request)}`,
+      2,
+      5
+    );
+
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait." },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { roundNumber, chosenScranId, scranAId, scranBId } = body;
 
@@ -20,7 +37,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get both scrans to calculate correctness
     const [scranAData, scranBData] = await Promise.all([
       db.select().from(scrans).where(eq(scrans.id, scranAId)).limit(1),
       db.select().from(scrans).where(eq(scrans.id, scranBId)).limit(1),
@@ -33,11 +49,9 @@ export async function POST(request: Request) {
     const scranA = scranAData[0];
     const scranB = scranBData[0];
 
-    // Calculate percentages (no longer updating votes - votes only through Telegram bot)
     const percentageA = getLikesPercentage(scranA);
     const percentageB = getLikesPercentage(scranB);
 
-    // Determine which one has higher percentage
     const correctScranId = percentageA >= percentageB ? scranAId : scranBId;
     const isCorrect = chosenScranId === correctScranId;
 

@@ -52,17 +52,23 @@ export const scrandleVotes = pgTable("scrandle_votes", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   dailyScrandleId: integer("daily_scrandle_id").notNull(),
   sessionId: text("session_id").notNull(),
+  fingerprintHash: text("fingerprint_hash"),
   chosenScranId: integer("chosen_scran_id").notNull(),
   createdAt: timestamp("created_at").notNull(),
-});
+}, (table) => ({
+  uniqueVote: uniqueIndex("unique_scrandle_vote").on(table.sessionId, table.dailyScrandleId),
+}));
 
 export const dailyUserResults = pgTable("daily_user_results", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   date: text("date").notNull(),
   sessionId: text("session_id").notNull(),
+  fingerprintHash: text("fingerprint_hash"),
   score: integer("score").notNull(),
   createdAt: timestamp("created_at").notNull(),
-});
+}, (table) => ({
+  uniqueResultPerDay: uniqueIndex("unique_user_result_per_day").on(table.sessionId, table.date),
+}));
 
 export const telegramVotes = pgTable("telegram_votes", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
