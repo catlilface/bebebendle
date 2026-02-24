@@ -3,7 +3,7 @@ import {
   hasPlayedToday,
   saveDailyResult,
   getTodayResult,
-} from "../../app/lib/cookies";
+} from "../../lib/cookies";
 
 describe("cookies", () => {
   beforeEach(() => {

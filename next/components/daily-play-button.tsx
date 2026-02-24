@@ -2,10 +2,9 @@
 
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
-import { hasPlayedToday, getTodayResult } from "../lib/cookies";
+import { hasPlayedToday, getTodayResult } from "@/lib/cookies";
 
-function subscribe(callback: () => void) {
-  // This is a no-op since cookies don't change in real-time
+function subscribe() {
   return () => {};
 }
 
@@ -21,7 +20,6 @@ function getServerSnapshot() {
 export function DailyPlayButton() {
   const hasPlayed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   
-  // Get score only if played
   let score: number | null = null;
   if (hasPlayed && typeof window !== "undefined") {
     const result = getTodayResult();

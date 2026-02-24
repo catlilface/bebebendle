@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db, dailyUserResults } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { cookies } from "next/headers";
-import { checkRateLimit, getClientIp } from "../../middleware/rateLimit";
+import { checkRateLimit, getClientIp } from "@/app/api/middleware/rateLimit";
 
 export async function POST(request: Request) {
   try {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Copy, Check } from "lucide-react";
+import { formatShareText } from "@/lib/utils";
 
 interface ShareButtonProps {
   userAnswers: {
@@ -14,8 +15,7 @@ export function ShareButton({ userAnswers, score }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    const circles = userAnswers.map((answer) => (answer.isCorrect ? "🟢" : "🔴")).join("");
-    const text = `${circles} - ${score}/10\nhttps://bebebendle.ru`;
+    const text = formatShareText(userAnswers, score);
 
     try {
       await navigator.clipboard.writeText(text);

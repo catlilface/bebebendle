@@ -3,7 +3,8 @@
 import { headers } from "next/headers";
 import { db, scrans, dailyUserResults } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { checkRateLimit } from "../api/middleware/rateLimit";
+import { checkRateLimit } from "@/app/api/middleware/rateLimit";
+import { getLikesPercentage } from "@/lib/scoring";
 
 async function getClientIpFromHeaders(): Promise<string> {
   const headersList = await headers();
@@ -18,15 +19,6 @@ async function getClientIpFromHeaders(): Promise<string> {
   return "unknown";
 }
 
-function getLikesPercentage(scran: {
-  numberOfLikes: number;
-  numberOfDislikes: number;
-}): number {
-  const total = scran.numberOfLikes + scran.numberOfDislikes;
-  if (total === 0) return 50;
-  return Math.round((scran.numberOfLikes / total) * 100);
-}
-
 export async function submitDailyVote(
   roundNumber: number,
   chosenScranId: number,
@@ -35,7 +27,7 @@ export async function submitDailyVote(
   fingerprint: string | null
 ) {
   const clientIp = await getClientIpFromHeaders();
-  
+
   const rateLimitResult = await checkRateLimit(
     `daily-vote:${clientIp}`,
     2,
@@ -62,8 +54,14 @@ export async function submitDailyVote(
   const scranA = scranAData[0];
   const scranB = scranBData[0];
 
-  const percentageA = getLikesPercentage(scranA);
-  const percentageB = getLikesPercentage(scranB);
+  const percentageA = getLikesPercentage({
+    numberOfLikes: scranA.numberOfLikes,
+    numberOfDislikes: scranA.numberOfDislikes,
+  });
+  const percentageB = getLikesPercentage({
+    numberOfLikes: scranB.numberOfLikes,
+    numberOfDislikes: scranB.numberOfDislikes,
+  });
 
   const correctScranId = percentageA >= percentageB ? scranAId : scranBId;
   const isCorrect = chosenScranId === correctScranId;
@@ -86,32 +84,35 @@ export async function submitDailyResult(
   fingerprint: string | null
 ) {
   const clientIp = await getClientIpFromHeaders();
-  
+
   const rateLimitResult = await checkRateLimit(
     `daily-result:${clientIp}`,
     1,
     10
   );
-  
+
   if (!rateLimitResult.allowed) {
     return { error: "Too many requests. Please wait.", status: 429 };
   }
-  
+
   if (!date || typeof score !== "number" || score < 0 || score > 10) {
     return { error: "Invalid date or score", status: 400 };
   }
-  
+
+  // Use fingerprint as session ID
+  const sessionId = fingerprint || `anon-${clientIp}-${Date.now()}`;
+
   const existing = await db
     .select()
     .from(dailyUserResults)
     .where(
       and(
         eq(dailyUserResults.date, date),
-        eq(dailyUserResults.sessionId, "temp")
+        eq(dailyUserResults.sessionId, sessionId)
       )
     )
     .limit(1);
-  
+
   if (existing.length > 0) {
     return {
       message: "Score already recorded",
@@ -119,15 +120,15 @@ export async function submitDailyResult(
       alreadyPlayed: true,
     };
   }
-  
+
   await db.insert(dailyUserResults).values({
     date,
-    sessionId: "temp",
+    sessionId,
     fingerprintHash: fingerprint,
     score,
     createdAt: new Date(),
   });
-  
+
   return { success: true, score, fingerprint };
 }
 

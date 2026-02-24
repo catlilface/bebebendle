@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { DailyPlayButton } from "../../app/components/DailyPlayButton";
-import * as cookiesModule from "../../app/lib/cookies";
+import { DailyPlayButton } from "@/components/daily-play-button";
+import * as cookiesModule from "@/lib/cookies";
 
 // Mock the cookies module
-vi.mock("../../app/lib/cookies", () => ({
+vi.mock("@/lib/cookies", () => ({
   hasPlayedToday: vi.fn(),
   getTodayResult: vi.fn(),
 }));

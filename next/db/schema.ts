@@ -85,9 +85,3 @@ export type DailyScrandle = typeof dailyScrandles.$inferSelect;
 export type ScrandleVote = typeof scrandleVotes.$inferSelect;
 export type DailyUserResult = typeof dailyUserResults.$inferSelect;
 export type TelegramVote = typeof telegramVotes.$inferSelect;
-
-export function getLikesPercentage(scran: Scran): number {
-  const total = scran.numberOfLikes + scran.numberOfDislikes;
-  if (total === 0) return 0;
-  return Math.round((scran.numberOfLikes / total) * 100);
-}

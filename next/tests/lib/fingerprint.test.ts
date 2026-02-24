@@ -3,7 +3,7 @@ import {
   getFingerprint,
   getFingerprintFromCookie,
   clearFingerprint,
-} from "../../app/lib/fingerprint";
+} from "../../lib/fingerprint";
 
 describe("fingerprint", () => {
   beforeEach(() => {

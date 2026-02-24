@@ -1,21 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
-function calculateTimeLeft() {
-  const now = new Date();
-  
-  // Calculate time until 00:00 UTC (midnight UTC)
-  const tomorrowUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
-  
-  const diff = tomorrowUTC.getTime() - now.getTime();
-  
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-  
-  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-}
+import { formatTimeUntilMidnightUTC } from "@/lib/utils";
 
 export function CountdownTimer() {
   const [timeLeft, setTimeLeft] = useState<string>("00:00:00");
@@ -24,14 +10,13 @@ export function CountdownTimer() {
   useEffect(() => {
     const initialize = () => {
       setMounted(true);
-      setTimeLeft(calculateTimeLeft());
+      setTimeLeft(formatTimeUntilMidnightUTC());
     };
     
-    // Use setTimeout to defer the state update
     const initTimeout = setTimeout(initialize, 0);
     
     const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
+      setTimeLeft(formatTimeUntilMidnightUTC());
     }, 1000);
     
     return () => {
@@ -46,7 +31,6 @@ export function CountdownTimer() {
     textShadow: "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, -2px 0 0 #000, 2px 0 0 #000, 0 -2px 0 #000, 0 2px 0 #000",
   };
 
-  // Prevent hydration mismatch by not rendering until mounted
   if (!mounted) {
     return (
       <div className="mb-4 sm:mb-6 2xl:mb-8 text-center">
