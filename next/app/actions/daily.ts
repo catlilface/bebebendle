@@ -92,15 +92,15 @@ export async function submitDailyResult(
     1,
     10
   );
-
+  
   if (!rateLimitResult.allowed) {
     return { error: "Too many requests. Please wait.", status: 429 };
   }
-
+  
   if (!date || typeof score !== "number" || score < 0 || score > 10) {
     return { error: "Invalid date or score", status: 400 };
   }
-
+  
   const existing = await db
     .select()
     .from(dailyUserResults)
@@ -111,7 +111,7 @@ export async function submitDailyResult(
       )
     )
     .limit(1);
-
+  
   if (existing.length > 0) {
     return {
       message: "Score already recorded",
@@ -119,7 +119,15 @@ export async function submitDailyResult(
       alreadyPlayed: true,
     };
   }
-
+  
+  await db.insert(dailyUserResults).values({
+    date,
+    sessionId: "temp",
+    fingerprintHash: fingerprint,
+    score,
+    createdAt: new Date(),
+  });
+  
   return { success: true, score, fingerprint };
 }
 
