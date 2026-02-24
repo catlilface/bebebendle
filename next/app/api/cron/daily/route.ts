@@ -1,10 +1,94 @@
 import { NextResponse } from "next/server";
 import { db, scrans, dailyScrandles } from "@/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, notInArray } from "drizzle-orm";
+import type { Scran } from "@/db/schema";
 
-// This route is called by Vercel Cron to create daily scrandle with 10 rounds
+const MIN_SCRANS = 20;
+const ROUNDS_COUNT = 10;
+const MIN_VOTES = 3;
+
+function shuffle<T>(array: T[]): T[] {
+  const result = [...array];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+async function getUsedScranIds(): Promise<Set<number>> {
+  const usedScrans = await db
+    .select({
+      scranAId: dailyScrandles.scranAId,
+      scranBId: dailyScrandles.scranBId,
+    })
+    .from(dailyScrandles);
+
+  const usedScranIds = new Set<number>();
+  for (const row of usedScrans) {
+    usedScranIds.add(row.scranAId);
+    usedScranIds.add(row.scranBId);
+  }
+  return usedScranIds;
+}
+
+async function getApprovedScransWithVotes(
+  excludeIds?: Set<number>
+): Promise<Scran[]> {
+  const conditions = [
+    eq(scrans.approved, true),
+    sql`${scrans.numberOfLikes} + ${scrans.numberOfDislikes} > ${MIN_VOTES}`,
+  ];
+
+  if (excludeIds && excludeIds.size > 0) {
+    conditions.push(notInArray(scrans.id, Array.from(excludeIds)));
+  }
+
+  return db
+    .select()
+    .from(scrans)
+    .where(and(...conditions));
+}
+
+async function checkExistingRoundsForDate(date: string): Promise<boolean> {
+  const existing = await db
+    .select({ id: dailyScrandles.id })
+    .from(dailyScrandles)
+    .where(eq(dailyScrandles.date, date))
+    .limit(1);
+
+  return existing.length > 0;
+}
+
+async function createDailyRounds(
+  scrans: Scran[],
+  date: string
+): Promise<{ roundNumber: number; scranA: string; scranB: string }[]> {
+  const createdRounds = [];
+
+  for (let roundNumber = 1; roundNumber <= ROUNDS_COUNT; roundNumber++) {
+    const scranA = scrans[(roundNumber - 1) * 2];
+    const scranB = scrans[(roundNumber - 1) * 2 + 1];
+
+    await db.insert(dailyScrandles).values({
+      date,
+      scranAId: scranA.id,
+      scranBId: scranB.id,
+      roundNumber: roundNumber,
+      createdAt: new Date(),
+    });
+
+    createdRounds.push({
+      roundNumber,
+      scranA: scranA.name,
+      scranB: scranB.name,
+    });
+  }
+
+  return createdRounds;
+}
+
 export async function GET(request: Request) {
-  // Verify cron secret to prevent unauthorized access
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -13,65 +97,34 @@ export async function GET(request: Request) {
   try {
     const today = new Date().toISOString().split("T")[0];
 
-    // Check if any rounds already exist for today
-    const existing = await db
-      .select()
-      .from(dailyScrandles)
-      .where(eq(dailyScrandles.date, today))
-      .limit(1);
-
-    if (existing.length > 0) {
-      return NextResponse.json({ 
+    if (await checkExistingRoundsForDate(today)) {
+      return NextResponse.json({
         message: "Daily scrandles already exist for today",
-        count: 10
+        count: ROUNDS_COUNT,
       });
     }
 
-    // Get approved scrans with at least 3 total votes (likes + dislikes > 2)
-    const approvedScrans = await db
-      .select()
-      .from(scrans)
-      .where(
-        and(
-          eq(scrans.approved, true),
-          sql`${scrans.numberOfLikes} + ${scrans.numberOfDislikes} > 3`
-        )
-      );
+    const usedScranIds = await getUsedScranIds();
 
-    if (approvedScrans.length < 20) {
+    let approvedScrans = await getApprovedScransWithVotes(usedScranIds);
+
+    if (approvedScrans.length < MIN_SCRANS) {
+      approvedScrans = await getApprovedScransWithVotes();
+    }
+
+    if (approvedScrans.length < MIN_SCRANS) {
       return NextResponse.json(
-        { error: "Not enough scrans with sufficient votes (need at least 20 scrans with 3+ votes)" },
+        {
+          error: `Not enough scrans with sufficient votes (need at least ${MIN_SCRANS}, found ${approvedScrans.length})`,
+        },
         { status: 400 }
       );
     }
 
-    // Shuffle and pick 20 unique scrans for 10 pairs
-    const shuffled = [...approvedScrans].sort(() => Math.random() - 0.5);
-    const selectedScrans = shuffled.slice(0, 20);
+    const selectedScrans = shuffle(approvedScrans).slice(0, MIN_SCRANS);
+    const createdRounds = await createDailyRounds(selectedScrans, today);
 
-    // Create 10 rounds
-    const createdRounds = [];
-    const createdAt = new Date().toISOString();
-
-    for (let roundNumber = 1; roundNumber <= 10; roundNumber++) {
-      const scranA = selectedScrans[(roundNumber - 1) * 2];
-      const scranB = selectedScrans[(roundNumber - 1) * 2 + 1];
-
-      await db.insert(dailyScrandles).values({
-        date: today,
-        scranAId: scranA.id,
-        scranBId: scranB.id,
-        roundNumber: roundNumber,
-        createdAt: new Date(),
-      });
-
-      createdRounds.push({
-        roundNumber,
-        scranA: scranA.name,
-        scranB: scranB.name,
-      });
-    }
-    console.log("Added daily gamee")
+    console.log("Added daily game");
 
     return NextResponse.json({
       message: "Daily scrandles created successfully",
