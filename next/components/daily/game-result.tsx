@@ -32,7 +32,7 @@ export function GameResult({ userAnswers, score, averageScore }: GameResultProps
 
         <div className="mb-8 space-y-4">
           <ScoreDisplay score={score} />
-          {averageScore !== null && <AverageScoreDisplay averageScore={averageScore} />}
+          <AverageScoreDisplay averageScore={averageScore !== null ? averageScore : score} />
         </div>
 
         <ShareButton userAnswers={userAnswers} score={score} />

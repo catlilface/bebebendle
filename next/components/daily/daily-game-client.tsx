@@ -52,6 +52,15 @@ export function DailyGameClient({ initialData }: DailyGameClientProps) {
         />
       );
 
+    case "already-played":
+      return (
+        <GameResult
+          userAnswers={gameState.result.userAnswers}
+          score={gameState.result.score}
+          averageScore={null}
+        />
+      );
+
     default:
       return <ErrorState message="Неизвестное состояние" />;
   }
