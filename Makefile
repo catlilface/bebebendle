@@ -1,6 +1,6 @@
 # Makefile for Bebebendle Docker operations
 
-.PHONY: help build up down logs shell test clean
+.PHONY: help build up down logs shell test test-next clean
 
 # Default target
 help:
@@ -16,6 +16,7 @@ help:
 	@echo "  make clean        - Remove all containers and volumes"
 	@echo "  make restart      - Restart all services"
 	@echo "  make migrate-data - Migrate data from SQLite to PostgreSQL"
+	@echo "  make test-next    - Run frontend tests"
 
 # Build all images
 build:
@@ -105,3 +106,7 @@ new-daily-raw:
 # Migrate data from SQLite to PostgreSQL
 migrate-data:
 	docker compose exec next bun run scripts/migrate-data.ts
+
+# Run frontend tests
+test-next:
+	@cd next && bun test:run
