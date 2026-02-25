@@ -54,16 +54,21 @@ export async function submitDailyVote(
   const scranA = scranAData[0];
   const scranB = scranBData[0];
 
-  const percentageA = getLikesPercentage({
+  const percentageA = Math.floor(getLikesPercentage({
     numberOfLikes: scranA.numberOfLikes,
     numberOfDislikes: scranA.numberOfDislikes,
-  });
-  const percentageB = getLikesPercentage({
+  }));
+  const percentageB = Math.floor(getLikesPercentage({
     numberOfLikes: scranB.numberOfLikes,
     numberOfDislikes: scranB.numberOfDislikes,
-  });
+  }));
 
-  const correctScranId = percentageA >= percentageB ? scranAId : scranBId;
+  let correctScranId = percentageA >= percentageB ? scranAId : scranBId;
+
+  if (percentageA === percentageB) {
+    correctScranId = chosenScranId
+  }
+
   const isCorrect = chosenScranId === correctScranId;
 
   return {

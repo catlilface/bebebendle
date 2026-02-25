@@ -14,7 +14,13 @@ interface GameResultProps {
   averageScore: number | null;
 }
 
-export function GameResult({ userAnswers, score, averageScore }: GameResultProps) {
+export function GameResult({
+  userAnswers,
+  score,
+  averageScore,
+}: GameResultProps) {
+  const trueScore = userAnswers.filter(({ isCorrect }) => isCorrect).length;
+
   return (
     <div className="retro-bg flex min-h-dvh flex-col items-center justify-center px-4">
       <div className="retro-overlay absolute inset-0" />
@@ -31,11 +37,13 @@ export function GameResult({ userAnswers, score, averageScore }: GameResultProps
         <AnswerIndicators answers={userAnswers} delayIncrement={0.1} />
 
         <div className="mb-8 space-y-4">
-          <ScoreDisplay score={score} />
-          <AverageScoreDisplay averageScore={averageScore !== null ? averageScore : score} />
+          <ScoreDisplay score={trueScore} />
+          <AverageScoreDisplay
+            averageScore={averageScore !== null ? averageScore : trueScore}
+          />
         </div>
 
-        <ShareButton userAnswers={userAnswers} score={score} />
+        <ShareButton userAnswers={userAnswers} score={trueScore} />
 
         <Link
           href="/"
