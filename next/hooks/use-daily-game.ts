@@ -3,7 +3,11 @@
 import { useEffect, useCallback } from "react";
 import { getFingerprint } from "@/lib/fingerprint";
 import { hasPlayedToday, getTodayResult, saveDailyResult } from "@/lib/cookies";
-import { submitDailyVote, submitDailyResult, getDailyAverage } from "@/app/actions/daily";
+import {
+  submitDailyVote,
+  submitDailyResult,
+  getDailyAverage,
+} from "@/app/actions/daily";
 import { buildUserAnswer } from "@/lib/game-helpers";
 import { useDailyData } from "@/hooks/use-daily-data";
 import { useVoteSubmission } from "@/hooks/use-vote-submission";
@@ -28,7 +32,9 @@ interface UseDailyGameReturn {
 
 const TOTAL_ROUNDS = 10;
 
-export function useDailyGame({ initialData }: UseDailyGameProps = {}): UseDailyGameReturn {
+export function useDailyGame({
+  initialData,
+}: UseDailyGameProps = {}): UseDailyGameReturn {
   // Compose smaller hooks
   const { dailyData, gameState, setGameState } = useDailyData(initialData);
   const {
@@ -45,24 +51,6 @@ export function useDailyGame({ initialData }: UseDailyGameProps = {}): UseDailyG
   const { showResult, isTransitioning, setShowResult, startTransition } =
     useTransitionState();
   const { prefetchNextRound } = useImagePreloader();
-
-  // Check if already played on initial render
-  const initialGameState = useCallback(() => {
-    if (typeof window !== "undefined" && hasPlayedToday()) {
-      const result = getTodayResult();
-      if (result) {
-        return { type: "already-played" as const, result };
-      }
-    }
-    return { type: "loading" as const };
-  }, [])();
-
-  // Set initial game state
-  useEffect(() => {
-    if (initialGameState.type !== "loading") {
-      setGameState(initialGameState);
-    }
-  }, [initialGameState, setGameState]);
 
   // Initialize fingerprint
   useEffect(() => {
@@ -101,7 +89,7 @@ export function useDailyGame({ initialData }: UseDailyGameProps = {}): UseDailyG
         });
       }
     },
-    [dailyData, userAnswers, setGameState]
+    [dailyData, userAnswers, setGameState],
   );
 
   // Handle vote submission
@@ -110,7 +98,7 @@ export function useDailyGame({ initialData }: UseDailyGameProps = {}): UseDailyG
       if (!dailyData || isVoting) return;
 
       const currentRoundData = dailyData.rounds.find(
-        (r) => r.roundNumber === currentRound
+        (r) => r.roundNumber === currentRound,
       );
       if (!currentRoundData) return;
 
@@ -122,11 +110,14 @@ export function useDailyGame({ initialData }: UseDailyGameProps = {}): UseDailyG
           chosenScranId,
           currentRoundData.scranA.id,
           currentRoundData.scranB.id,
-          fingerprint
+          fingerprint,
         );
 
         if ("error" in result) {
-          setGameState({ type: "error", message: result.error || "Unknown error" });
+          setGameState({
+            type: "error",
+            message: result.error || "Unknown error",
+          });
           setIsVoting(false);
           return;
         }
@@ -138,7 +129,7 @@ export function useDailyGame({ initialData }: UseDailyGameProps = {}): UseDailyG
             result.chosenScranId,
             result.correctScranId,
             result.percentageA,
-            result.percentageB
+            result.percentageB,
           );
 
           addAnswer(answer);
@@ -180,7 +171,7 @@ export function useDailyGame({ initialData }: UseDailyGameProps = {}): UseDailyG
       getCorrectCount,
       submitScore,
       setGameState,
-    ]
+    ],
   );
 
   return {
