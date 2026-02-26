@@ -18,13 +18,18 @@ function getServerSnapshot() {
 }
 
 export function DailyPlayButton() {
-  const hasPlayed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  
+  const hasPlayed = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
+
   let score: number | null = null;
+
   if (hasPlayed && typeof window !== "undefined") {
     const result = getTodayResult();
     if (result) {
-      score = result.score;
+      score = result.userAnswers.filter(({ isCorrect }) => isCorrect).length;
     }
   }
 

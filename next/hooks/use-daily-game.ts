@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback } from "react";
 import { getFingerprint } from "@/lib/fingerprint";
-import { hasPlayedToday, getTodayResult, saveDailyResult } from "@/lib/cookies";
+import { saveDailyResult } from "@/lib/cookies";
 import {
   submitDailyVote,
   submitDailyResult,
