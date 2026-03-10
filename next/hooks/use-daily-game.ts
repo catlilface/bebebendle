@@ -58,39 +58,37 @@ export function useDailyGame({
   }, []);
 
   // Submit final score
-  const submitScore = useCallback(
-    async (score: number) => {
-      if (!dailyData) return;
+  const submitScore = useCallback(async () => {
+    if (!dailyData) return;
+    const score = userAnswers.filter(({ isCorrect }) => isCorrect).length;
 
-      try {
-        const fingerprint = await getFingerprint();
-        await submitDailyResult(dailyData.date, score, fingerprint);
+    try {
+      const fingerprint = await getFingerprint();
+      await submitDailyResult(dailyData.date, score, fingerprint);
 
-        const avgData = await getDailyAverage(dailyData.date);
+      const avgData = await getDailyAverage(dailyData.date);
 
-        setGameState({
-          type: "complete",
-          score,
-          averageScore: avgData.averageScore,
-        });
+      setGameState({
+        type: "complete",
+        score,
+        averageScore: avgData.averageScore,
+      });
 
-        saveDailyResult({
-          date: dailyData.date,
-          score,
-          totalRounds: TOTAL_ROUNDS,
-          userAnswers: [...userAnswers],
-        });
-      } catch (error) {
-        console.error("Error submitting score:", error);
-        setGameState({
-          type: "complete",
-          score,
-          averageScore: null,
-        });
-      }
-    },
-    [dailyData, userAnswers, setGameState],
-  );
+      saveDailyResult({
+        date: dailyData.date,
+        score,
+        totalRounds: TOTAL_ROUNDS,
+        userAnswers: [...userAnswers],
+      });
+    } catch (error) {
+      console.error("Error submitting score:", error);
+      setGameState({
+        type: "complete",
+        score,
+        averageScore: null,
+      });
+    }
+  }, [dailyData, userAnswers, setGameState]);
 
   // Handle vote submission
   const handleVote = useCallback(

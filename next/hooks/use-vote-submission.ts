@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { DailyData, UserAnswer } from "@/types/game";
+import type { UserAnswer } from "@/types/game";
 
 interface UseVoteSubmissionReturn {
   currentRound: number;

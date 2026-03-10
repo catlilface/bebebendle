@@ -22,7 +22,9 @@ async function getUsedScranIds(): Promise<Set<number>> {
       scranAId: dailyScrandles.scranAId,
       scranBId: dailyScrandles.scranBId,
     })
-    .from(dailyScrandles);
+    .from(dailyScrandles)
+    .limit(500);
+  // Scrans can repeat once in 50 days
 
   const usedScranIds = new Set<number>();
   for (const row of usedScrans) {
@@ -33,7 +35,7 @@ async function getUsedScranIds(): Promise<Set<number>> {
 }
 
 async function getApprovedScransWithVotes(
-  excludeIds?: Set<number>
+  excludeIds?: Set<number>,
 ): Promise<Scran[]> {
   const conditions = [
     eq(scrans.approved, true),
@@ -62,7 +64,7 @@ async function checkExistingRoundsForDate(date: string): Promise<boolean> {
 
 async function createDailyRounds(
   scrans: Scran[],
-  date: string
+  date: string,
 ): Promise<{ roundNumber: number; scranA: string; scranB: string }[]> {
   const createdRounds = [];
 
@@ -117,7 +119,7 @@ export async function GET(request: Request) {
         {
           error: `Not enough scrans with sufficient votes (need at least ${MIN_SCRANS}, found ${approvedScrans.length})`,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -135,7 +137,7 @@ export async function GET(request: Request) {
     console.error("Error creating daily scrandles:", error);
     return NextResponse.json(
       { error: "Failed to create daily scrandles" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
