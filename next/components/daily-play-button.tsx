@@ -42,11 +42,11 @@ export function DailyPlayButton() {
         >
           Уже сыграно ✓
         </button>
-        {/*{score !== null && (
+        {score !== null && (
           <p className="pixel-text mt-2 text-lg text-white">
             Ваш результат: {score}/10
           </p>
-        )}*/}
+        )}
         <p className="pixel-text mt-1 text-sm text-zinc-300">
           Следующий дейлик завтра
         </p>
