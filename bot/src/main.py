@@ -412,8 +412,8 @@ async def process_description(message: Message, state: FSMContext) -> None:
 
     description = None if message.text == "-" else message.text.strip()
 
-    if description and len(description) > 500:
-        await message.answer("Описание слишком длинное (максимум 500 символов). Попробуй покороче.")
+    if description and len(description) > 200:
+        await message.answer("Описание слишком длинное (максимум 200 символов). Попробуй покороче.")
         return
 
     await state.update_data(description=description)

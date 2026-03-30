@@ -23,7 +23,7 @@ async function getUsedScranIds(): Promise<Set<number>> {
       scranBId: dailyScrandles.scranBId,
     })
     .from(dailyScrandles)
-    .limit(500);
+    .limit(2000);
   // Scrans can repeat once in 50 days
 
   const usedScranIds = new Set<number>();
