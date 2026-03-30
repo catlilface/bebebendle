@@ -145,8 +145,7 @@ export function useDailyGame({
               incrementRound();
               setIsVoting(false);
             } else {
-              const correctCount = getCorrectCount();
-              submitScore(correctCount);
+              submitScore();
             }
           });
         }
